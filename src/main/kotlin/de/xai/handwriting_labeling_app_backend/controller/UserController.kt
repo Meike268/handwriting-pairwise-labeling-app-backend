@@ -7,16 +7,16 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/users")
-class UserController(private val userService: UserService) {
+class UserController(private val userRepository: UserRepository) {
 
-//    @GetMapping("/")
-//    fun getAllUsers(): List<User> = userRepository.findAll()
-//
-//    @GetMapping("/{id}")
-//    fun getUser(@PathVariable(value = "id") userId: Long): User = userRepository.findById(userId).get()
-//
-//    @PostMapping("/")
-//    fun postUser(@RequestBody user: User): User {
-//        return userRepository.save(user)
-//    }
+    @GetMapping("/")
+    fun getAllUsers(): List<User> = userRepository.findAll()
+
+    @GetMapping("/{id}")
+    fun getUser(@PathVariable(value = "id") userId: Long): User = userRepository.findById(userId).get()
+
+    @PostMapping("/")
+    fun postUser(@RequestBody user: User): User {
+        return userRepository.save(user)
+    }
 }
