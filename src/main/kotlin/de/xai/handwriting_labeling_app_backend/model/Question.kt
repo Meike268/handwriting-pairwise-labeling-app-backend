@@ -1,6 +1,6 @@
 package de.xai.handwriting_labeling_app_backend.model
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 class Question(

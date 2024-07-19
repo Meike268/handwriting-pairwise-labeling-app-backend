@@ -1,10 +1,6 @@
 package de.xai.handwriting_labeling_app_backend.model
 
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
+import jakarta.persistence.*
 
 
 @Entity

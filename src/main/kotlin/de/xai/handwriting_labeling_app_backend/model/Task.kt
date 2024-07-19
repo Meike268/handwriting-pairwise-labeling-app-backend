@@ -1,18 +1,18 @@
 package de.xai.handwriting_labeling_app_backend.model
 
 import java.io.Serializable
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 @IdClass(TaskId::class)
 class Task(
 
-    @Column
+    @JoinColumn
     @Id
     @ManyToOne
     var sample: Sample? = null,
 
-    @Column
+    @JoinColumn
     @Id
     @ManyToOne
     var question: Question? = null,

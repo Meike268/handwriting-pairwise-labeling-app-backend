@@ -1,7 +1,7 @@
 package de.xai.handwriting_labeling_app_backend.model
 
 import java.io.Serializable
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 @IdClass(SampleId::class)
