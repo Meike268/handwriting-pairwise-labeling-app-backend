@@ -1,20 +1,26 @@
 package de.xai.handwriting_labeling_app_backend.model
 
+import java.io.Serializable
 import javax.persistence.*
 
 @Entity
+@IdClass(SampleId::class)
 class Sample(
 
     @Column
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var sampleId: Long? = null,
+    @Id
+    @ManyToOne
+    var referenceSentence: ReferenceSentence? = null,
 
-    @Column
-    var sentenceText: String? = null,
+    @Id @Column
+    var studentId: Int? = null,
 
     @Column
     var sentenceImagePath: String? = null,
-
-    @Column
-    var studentId: Int? = null,
 )
+
+
+class SampleId(
+    private val studentId: Int,
+    private val referenceSentence: ReferenceSentence) : Serializable
+
