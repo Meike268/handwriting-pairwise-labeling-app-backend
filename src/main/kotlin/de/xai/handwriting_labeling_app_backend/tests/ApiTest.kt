@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 class ApiTest {
-
     @GetMapping("/api/ping")
     fun ping(): ResponseEntity<out String> {
         return ResponseEntity.ok("pong")
