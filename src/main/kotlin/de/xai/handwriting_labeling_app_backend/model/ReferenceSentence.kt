@@ -1,23 +1,23 @@
 package de.xai.handwriting_labeling_app_backend.model
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.ManyToMany
+import jakarta.persistence.*
 
 @Entity
+@Table(name = "reference_sentence")
 class ReferenceSentence(
 
     @Column
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var referenceSentenceId: Long? = null,
+    var id: Long? = null,
 
     @Column
     var content: String? = null,
 
     @Column
-    @ManyToMany
-    var possibleQuestions: List<Question>? = null
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "applicable_question",
+        joinColumns = [JoinColumn(name = "reference_sentence_id", referencedColumnName = "id")],
+        inverseJoinColumns = [JoinColumn(name = "question_id", referencedColumnName = "id")]
+    )
+    var applicableQuestions: Set<Question>? = null
 )

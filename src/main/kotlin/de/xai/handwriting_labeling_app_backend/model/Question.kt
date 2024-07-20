@@ -7,7 +7,7 @@ class Question(
 
     @Column
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var questionId: Long? = null,
+    var id: Long? = null,
 
     @Column
     var instructionText: String? = null

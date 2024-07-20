@@ -4,23 +4,19 @@ import java.io.Serializable
 import jakarta.persistence.*
 
 @Entity
-@IdClass(SampleId::class)
 class Sample(
 
-    @Column
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
+    var id: Long? = null,
+
+    @JoinColumn(name = "sentence_id", referencedColumnName = "id")
     @ManyToOne
     var referenceSentence: ReferenceSentence? = null,
 
-    @Id @Column
+    @Column
     var studentId: Int? = null,
 
     @Column
     var sentenceImagePath: String? = null,
 )
-
-
-class SampleId(
-    private val studentId: Int,
-    private val referenceSentence: ReferenceSentence) : Serializable
-

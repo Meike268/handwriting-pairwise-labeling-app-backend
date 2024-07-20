@@ -4,6 +4,7 @@ import java.io.Serializable
 import jakarta.persistence.*
 
 @Entity
+@Table(name = "example")
 @IdClass(ExampleId::class)
 class Example(
 

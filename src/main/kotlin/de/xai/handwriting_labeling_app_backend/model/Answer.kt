@@ -10,17 +10,23 @@ class Answer(
     @Column
     var score: Int? = null,
 
-    @JoinColumn
+    @JoinColumn(name = "sample_id", referencedColumnName = "id")
     @Id
     @ManyToOne
-    var task: Task? = null,
+    var sample: Sample? = null,
 
-    @JoinColumn
+    @JoinColumn(name = "question_id", referencedColumnName = "id")
+    @Id
+    @ManyToOne
+    var question: Question? = null,
+
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     @Id
     @ManyToOne
     var user: User? = null,
 )
 
 class AnswerId(
-    private val task: Task,
+    private val sample: Sample,
+    private val question: Question,
     private val user: User) : Serializable
