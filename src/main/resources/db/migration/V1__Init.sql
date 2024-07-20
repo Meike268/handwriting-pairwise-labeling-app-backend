@@ -50,6 +50,7 @@ CREATE TABLE `reference_sentence`
     `content`        text      NOT NULL,
     PRIMARY KEY (`id`)
 );
+INSERT INTO `reference_sentence`(`id`, `content`)
 VALUES (1, 'Der Hahn und der Hund tanzen.'),
        (2, 'Er stand da und lauschte.'),
        (3, 'Hannah hat ein Buch gelesen.'),
@@ -72,7 +73,6 @@ CREATE TABLE `applicable_question`
 INSERT INTO `applicable_question`(`reference_sentence_id`, `question_id`)
 VALUES (1, 1), (2, 1), (3, 1),(4, 1),(5, 1),(6, 1),(7, 1),(8, 1),(9, 1),(10, 1),
        (1, 2),(2, 2),(3, 2),(4, 2),(5, 2),(6, 2),(7, 2),(8, 2),(9, 2),(10, 2),
-       (1, 3),(2, 3),(3, 3),(4, 3),(5, 3),(6, 3),(7, 3),(8, 3),(9, 3),(10, 3),
        (1, 3),(2, 3),(3, 3),(4, 3),(5, 3),(6, 3),(7, 3),(8, 3),(9, 3),(10, 3),
        (1, 4),(2, 4),(5, 4),(6, 4),(7, 4),(8, 4),
        (2, 5),(3, 5),(4, 5),(6, 5),(8, 5),(9, 5),(10, 5);
@@ -106,4 +106,4 @@ CREATE TABLE `answer` (
     FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
     FOREIGN KEY (`sample_id`) REFERENCES `sample` (`id`),
     FOREIGN KEY (`question_id`) REFERENCES `question` (`id`)
-)
+);

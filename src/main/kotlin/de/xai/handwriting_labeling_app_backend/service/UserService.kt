@@ -8,6 +8,6 @@ import org.springframework.stereotype.Service
 @Service
 class UserService(private val userRepository: UserRepository): UserDetailsService {
     override fun loadUserByUsername(username: String?): UserDetails {
-        TODO("Not yet implemented")
+        return userRepository.findByUsername(username!!)!!
     }
 }
