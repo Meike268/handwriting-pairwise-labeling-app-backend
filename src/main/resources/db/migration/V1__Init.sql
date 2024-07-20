@@ -6,9 +6,9 @@ CREATE TABLE `user`
     PRIMARY KEY (`id`)
 );
 INSERT INTO `user`
-VALUES (1, 'admin', '$2a$12$QTcuscOqDo8mJ2PjmqMbquaNkYMegMIVlRql2EE3/iXSd.aMioAgS'),
-       (2, 'user', '$2a$12$QTcuscOqDo8mJ2PjmqMbquaNkYMegMIVlRql2EE3/iXSd.aMioAgS'),
-       (3, 'expert', '$2a$12$QTcuscOqDo8mJ2PjmqMbquaNkYMegMIVlRql2EE3/iXSd.aMioAgS');
+VALUES (1, 'admin', '$2a$12$/ROqUVGeB02S6s6/UoDHGum6wsRaNLjxrwsKVr6EttysAGXXYtB7.'),
+       (2, 'user', '$2a$12$Fcuwcf6c96qMRn/kgmnBKunye.DSR3gk74NucVEUu0DpJRR6g6rt6'),
+       (3, 'expert', '$2a$12$xuAaet2fbf51Neucdh0HseTf4IGLOGJhxR.qAQ413uCTQFVSPg44W');
 
 CREATE TABLE `role`
 (

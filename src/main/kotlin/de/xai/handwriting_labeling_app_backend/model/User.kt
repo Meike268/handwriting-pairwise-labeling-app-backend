@@ -17,8 +17,11 @@ class User(
     @Column(nullable = false)
     private val password: String? = null,
 
-    @ManyToMany
-    @JoinTable(name = "user_role", joinColumns = [JoinColumn(name = "user_id", referencedColumnName = "id")])
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_role",
+        joinColumns = [JoinColumn(name = "user_id", referencedColumnName = "id")],
+        inverseJoinColumns = [JoinColumn(name = "role_id", referencedColumnName = "id")]
+    )
     val roles: Set<UserRole>? = null
 ): UserDetails {
     override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
