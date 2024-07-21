@@ -22,10 +22,10 @@ class User(
         joinColumns = [JoinColumn(name = "user_id", referencedColumnName = "id")],
         inverseJoinColumns = [JoinColumn(name = "role_id", referencedColumnName = "id")]
     )
-    val roles: Set<UserRole>? = null
+    val roles: Set<UserRole> = mutableSetOf()
 ): UserDetails {
     override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-        return this.roles!!.toMutableSet()
+        return this.roles.toMutableSet()
     }
 
     override fun getPassword(): String {

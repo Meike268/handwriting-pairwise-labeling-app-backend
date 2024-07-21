@@ -19,6 +19,8 @@ class SecurityConfig {
             authorizeHttpRequests {
                 authorize("/api/ping", permitAll)
                 authorize(HttpMethod.POST, "/api/addOne", hasRole("ADMIN"))
+                authorize(HttpMethod.GET, "/api/users", hasRole("ADMIN"))
+                authorize(HttpMethod.POST, "/api/users", hasRole("ADMIN"))
                 authorize(HttpMethod.PUT, "/api/greeting", hasRole("USER"))
             }
             httpBasic { }

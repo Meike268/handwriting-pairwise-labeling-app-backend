@@ -13,8 +13,6 @@ data class UserRole (
     @Column(name = "name", nullable = false)
     val name: String? = null,
 
-    @ManyToMany(mappedBy="roles")
-    val users: Set<User>? = null
 ): GrantedAuthority {
     override fun getAuthority(): String {
         return this.name!!
