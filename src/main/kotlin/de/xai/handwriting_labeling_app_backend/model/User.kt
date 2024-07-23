@@ -1,5 +1,6 @@
 package de.xai.handwriting_labeling_app_backend.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -14,6 +15,7 @@ class User(
     @Column(nullable = false, unique = true)
     private val username: String? = null,
 
+    @JsonIgnore
     @Column(nullable = false)
     private val password: String? = null,
 

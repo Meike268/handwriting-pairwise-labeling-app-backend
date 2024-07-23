@@ -2,17 +2,21 @@ package de.xai.handwriting_labeling_app_backend.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+class SecurityConfig (val env: Environment) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http {
@@ -20,9 +24,11 @@ class SecurityConfig {
                 authorize("/api/ping", permitAll)
                 authorize(HttpMethod.POST, "/api/addOne", hasRole("ADMIN"))
                 authorize(HttpMethod.PUT, "/api/greeting", hasRole("USER"))
+                authorize(HttpMethod.POST, "/api/users/login", authenticated)
             }
             httpBasic { }
             csrf { disable() }
+            cors { }
         }
         return http.build()
     }
@@ -30,5 +36,17 @@ class SecurityConfig {
     @Bean
     fun passwordEncoder(): BCryptPasswordEncoder {
         return BCryptPasswordEncoder()
+    }
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val configuration = CorsConfiguration()
+        configuration.allowedOrigins = mutableListOf(env.getProperty("app.url.root"))
+        configuration.addAllowedHeader("Authorization")
+        configuration.allowedMethods = mutableListOf("GET", "POST", "PUT")
+
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", configuration)
+        return source
     }
 }

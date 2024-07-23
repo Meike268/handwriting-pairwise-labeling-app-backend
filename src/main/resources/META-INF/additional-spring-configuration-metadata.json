@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "app.url.root",
+      "type": "java.lang.String",
+      "description": "Root of the user-app. Mainly used for CORS-config."
+  }
+] }
