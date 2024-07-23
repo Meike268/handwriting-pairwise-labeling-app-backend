@@ -1,6 +1,6 @@
 package de.xai.handwriting_labeling_app_backend.model
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.persistence.*
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -15,14 +15,14 @@ class User(
     @Column(nullable = false, unique = true)
     private val username: String? = null,
 
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = false)
     private val password: String? = null,
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",
-        joinColumns = [JoinColumn(name = "user_id", referencedColumnName = "id")],
-        inverseJoinColumns = [JoinColumn(name = "role_id", referencedColumnName = "id")]
+        joinColumns = [JoinColumn(name = "user_id")],
+        inverseJoinColumns = [JoinColumn(name = "role_id")]
     )
     var roles: Set<Role> = mutableSetOf()
 ): UserDetails {
@@ -36,5 +36,9 @@ class User(
 
     override fun getUsername(): String {
         return this.username!!
+    }
+
+    override fun toString(): String {
+        return "User(id=$id, username=$username, password=$password, roles=$roles)"
     }
 }
