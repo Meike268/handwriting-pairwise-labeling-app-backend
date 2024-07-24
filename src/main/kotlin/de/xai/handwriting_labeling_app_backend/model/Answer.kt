@@ -27,8 +27,8 @@ class Answer(
     var score: Int? = null,
 )
 
-class AnswerId(
-    private val sample: Sample,
-    private val question: Question,
-    private val user: User
+data class AnswerId(
+    private val sample: Sample? = null,
+    private val question: Question? = null,
+    private val user: User? = null
 ) : Serializable

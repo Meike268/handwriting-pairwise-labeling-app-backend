@@ -19,7 +19,7 @@ class UserRole(
     var role: Role? = null
 )
 
-class UserRoleId(
-    private val user: User,
-    private val role: Role
+data class UserRoleId(
+    private val user: User? = null,
+    private val role: Role? = null
 ) : Serializable

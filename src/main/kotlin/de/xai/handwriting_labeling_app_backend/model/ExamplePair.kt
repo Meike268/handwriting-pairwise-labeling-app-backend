@@ -25,7 +25,7 @@ class ExamplePair(
     var question: Question? = null
 )
 
-class ExamplePairId(
-    private val question: Question,
-    private val referenceSentence: ReferenceSentence
+data class ExamplePairId(
+    private val question: Question? = null,
+    private val referenceSentence: ReferenceSentence? = null
 ) : Serializable

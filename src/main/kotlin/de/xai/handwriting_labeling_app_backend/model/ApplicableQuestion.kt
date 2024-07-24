@@ -19,7 +19,7 @@ class ApplicableQuestion(
     var question: Question? = null
 )
 
-class ApplicableQuestionId(
-    private val referenceSentence: ReferenceSentence,
-    private val question: Question
+data class ApplicableQuestionId(
+    private val referenceSentence: ReferenceSentence? = null,
+    private val question: Question? = null
 ) : Serializable
