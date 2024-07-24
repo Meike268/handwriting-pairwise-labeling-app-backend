@@ -5,10 +5,10 @@ import jakarta.persistence.*
 @Entity
 class Question(
 
-    @Column
+    @Column(name = "id")
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
-    @Column
-    var instructionText: String? = null
+    @Column(name = "description")
+    var description: String? = null
 )
