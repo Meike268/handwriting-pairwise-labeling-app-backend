@@ -8,7 +8,7 @@ data class Sample(
     val studentId: Long,
     val referenceSentence: ReferenceSentence?
 ) {
-    fun getResouceFile(): File {
+    fun getResourceFile(): File {
         return SampleRepository.getResourceFile(this)
     }
     fun getResourceUrl(): String {
