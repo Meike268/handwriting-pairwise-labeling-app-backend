@@ -27,6 +27,8 @@ class SecurityConfig (val env: Environment) {
                 authorize("/users", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/addOne", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/users/login", authenticated)
+
+                authorize(HttpMethod.GET, "/batch", hasRole("USER"))
             }
             httpBasic { }
             csrf { disable() }
