@@ -21,11 +21,12 @@ class SecurityConfig (val env: Environment) {
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http {
             authorizeHttpRequests {
-                authorize("/api/ping", permitAll)
-                authorize(HttpMethod.POST, "/api/addOne", hasRole("ADMIN"))
-                authorize("/api/users/", hasRole("ADMIN"))
-                authorize(HttpMethod.PUT, "/api/greeting", hasRole("USER"))
-                authorize(HttpMethod.POST, "/api/users/login", authenticated)
+                authorize("/ping", permitAll)
+                authorize("/files/**", authenticated)
+                authorize(HttpMethod.POST, "/addOne", hasRole("ADMIN"))
+                authorize("/users/", hasRole("ADMIN"))
+                authorize(HttpMethod.PUT, "/greeting", hasRole("USER"))
+                authorize(HttpMethod.POST, "/users/login", authenticated)
             }
             httpBasic { }
             csrf { disable() }

@@ -7,17 +7,17 @@ import java.security.Principal
 
 @RestController
 class ApiTest {
-    @GetMapping("/api/ping")
+    @GetMapping("/ping")
     fun ping(): ResponseEntity<out String> {
         return ResponseEntity.ok("pong")
     }
 
-    @PostMapping("/api/addOne")
+    @PostMapping("/addOne")
     fun addOne(@RequestBody number: Int): ResponseEntity<out Int> {
         return ResponseEntity.ok(number + 1)
     }
 
-    @PutMapping("/api/greeting", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping("/greeting", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun greeting(principal: Principal, @RequestBody greeting: Greeting): ResponseEntity<String> {
         return ResponseEntity.ok("${greeting.clause} ${principal.name}")
     }

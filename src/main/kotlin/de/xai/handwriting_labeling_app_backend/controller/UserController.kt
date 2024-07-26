@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*
 import java.security.Principal
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 class UserController(private val userRepository: UserRepository, val roleRepository: RoleRepository) {
     @PostMapping("/login")
     fun login(principal: Principal): ResponseEntity<out User> {
