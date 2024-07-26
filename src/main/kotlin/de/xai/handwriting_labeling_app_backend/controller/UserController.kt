@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*
 import java.security.Principal
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 class UserController(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository
