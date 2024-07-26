@@ -8,8 +8,6 @@ data class ReferenceSentenceInfoBody(
 ) {
     companion object {
         fun fromReferenceSentence(referenceSentence: ReferenceSentence): ReferenceSentenceInfoBody {
-            assert(referenceSentence.id != null)
-            assert(referenceSentence.content != null)
             return ReferenceSentenceInfoBody(
                 id = referenceSentence.id!!,
                 content = referenceSentence.content!!
