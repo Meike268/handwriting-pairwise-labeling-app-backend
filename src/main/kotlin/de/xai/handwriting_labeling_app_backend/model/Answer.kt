@@ -13,10 +13,8 @@ class Answer(
     @ManyToOne
     var user: User? = null,
 
-    @JoinColumn(name = "sample_id", referencedColumnName = "id")
-    @Id
-    @ManyToOne
-    var sample: Sample? = null,
+    @Column(name = "sample_id")
+    var sampleId: Long? = null,
 
     @JoinColumn(name = "question_id", referencedColumnName = "id")
     @Id
@@ -28,7 +26,7 @@ class Answer(
 )
 
 data class AnswerId(
-    private val sample: Sample? = null,
+    private val sampleId: Long? = null,
     private val question: Question? = null,
     private val user: User? = null
 ) : Serializable

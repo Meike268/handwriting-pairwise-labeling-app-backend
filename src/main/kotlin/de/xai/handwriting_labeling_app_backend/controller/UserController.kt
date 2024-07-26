@@ -1,7 +1,5 @@
 package de.xai.handwriting_labeling_app_backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
 import de.xai.handwriting_labeling_app_backend.apimodel.UserCreateBody
 import de.xai.handwriting_labeling_app_backend.apimodel.UserInfoBody
 import de.xai.handwriting_labeling_app_backend.model.User
@@ -25,7 +23,7 @@ class UserController(
 
     }
 
-    @GetMapping("/")
+    @GetMapping
     fun getAllUsers(): List<UserInfoBody> {
         return userRepository.findAll().map { user ->
             UserInfoBody.fromUser(user)
@@ -38,7 +36,7 @@ class UserController(
         return ResponseEntity.ok(UserInfoBody.fromUser(user))
     }
 
-    @PostMapping("/")
+    @PostMapping
     fun postUser(@RequestBody userCreateBody: UserCreateBody): User {
         return userRepository.save(User(
             username = userCreateBody.username,

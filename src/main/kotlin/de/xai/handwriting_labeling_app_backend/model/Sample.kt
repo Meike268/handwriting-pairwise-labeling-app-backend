@@ -1,16 +1,17 @@
 package de.xai.handwriting_labeling_app_backend.model
 
-import jakarta.persistence.*
+import de.xai.handwriting_labeling_app_backend.repository.SampleRepository
+import java.io.File
 
-@Entity
-class Sample(
-
-    @Id
-    @Column(name = "id")
-    var id: Long? = null,
-
-    @JoinColumn(name = "reference_sentence_id", referencedColumnName = "id")
-    @ManyToOne
-    var referenceSentence: ReferenceSentence? = null,
-
-    )
+data class Sample(
+    val id: Long,
+    val studentId: Long,
+    val referenceSentence: ReferenceSentence?
+) {
+    fun getResouceFile(): File {
+        return SampleRepository.getResourceFile(this)
+    }
+    fun getResourceUrl(): String {
+        return SampleRepository.getResourceUrl(this)
+    }
+}
