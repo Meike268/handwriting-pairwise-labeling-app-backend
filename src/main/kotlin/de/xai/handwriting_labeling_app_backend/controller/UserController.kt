@@ -1,6 +1,9 @@
 package de.xai.handwriting_labeling_app_backend.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
+import de.xai.handwriting_labeling_app_backend.apimodel.UserCreateBody
+import de.xai.handwriting_labeling_app_backend.apimodel.UserInfoBody
 import de.xai.handwriting_labeling_app_backend.model.User
 import de.xai.handwriting_labeling_app_backend.repository.RoleRepository
 import de.xai.handwriting_labeling_app_backend.repository.UserRepository
@@ -10,25 +13,39 @@ import java.security.Principal
 
 @RestController
 @RequestMapping("/api/users")
-class UserController(private val userRepository: UserRepository, val roleRepository: RoleRepository) {
+class UserController(
+    private val userRepository: UserRepository,
+    private val roleRepository: RoleRepository
+) {
     @PostMapping("/login")
-    fun login(principal: Principal): ResponseEntity<out User> {
-        val user = userRepository.findByUsername(principal.name)
-        return ResponseEntity.ok(user)
+    fun login(principal: Principal): ResponseEntity<out UserInfoBody> {
+        userRepository.findByUsername(principal.name)?.let { user ->
+            return ResponseEntity.ok(UserInfoBody.fromUser(user))
+        } ?: return ResponseEntity.badRequest().body(null)
+
     }
 
     @GetMapping("/")
-    fun getAllUsers(): List<User> = userRepository.findAll()
+    fun getAllUsers(): List<UserInfoBody> {
+        return userRepository.findAll().map { user ->
+            UserInfoBody.fromUser(user)
+        }
+    }
 
     @GetMapping("/{id}")
-    fun getUser(@PathVariable(value = "id") userId: Long): User = userRepository.findById(userId).get()
+    fun getUser(@PathVariable(value = "id") userId: Long): ResponseEntity<out UserInfoBody> {
+        val user = userRepository.findById(userId).get()
+        return ResponseEntity.ok(UserInfoBody.fromUser(user))
+    }
 
     @PostMapping("/")
-    fun postUser(@RequestBody userJson: ObjectNode): User {
+    fun postUser(@RequestBody userCreateBody: UserCreateBody): User {
         return userRepository.save(User(
-            username = userJson.get("username").textValue(),
-            password = userJson.get("password").textValue(),
-            roles = userJson.get("roles").toSet().map{ roleRepository.findByName("ROLE_${it.textValue()}") }.toSet()
+            username = userCreateBody.username,
+            password = userCreateBody.password,
+            roles = userCreateBody.roleNames.map { roleName ->
+                roleRepository.findByName("ROLE_${roleName}")
+            }.toSet()
         ))
     }
 }
