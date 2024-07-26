@@ -6,16 +6,17 @@ import jakarta.persistence.*
 @Table(name = "reference_sentence")
 class ReferenceSentence(
 
-    @Column
+    @Column(name = "id")
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
-    @Column
+    @Column(name = "content")
     var content: String? = null,
 
     @Column
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "applicable_question",
+    @JoinTable(
+        name = "applicable_question",
         joinColumns = [JoinColumn(name = "reference_sentence_id", referencedColumnName = "id")],
         inverseJoinColumns = [JoinColumn(name = "question_id", referencedColumnName = "id")]
     )

@@ -38,11 +38,11 @@ CREATE TABLE `question`
     PRIMARY KEY (`id`)
 );
 INSERT INTO `question`(`id`, `description`)
-VALUES (1, 'overall legibility'),
-       (2, 'inclination'),
-       (3, 'r, n, h different'),
-       (4, 'a, d different'),
-       (5, 'e, l different');
+VALUES (1, 'overall-legibility'),
+       (2, 'letter-alignment'),
+       (3, 'letter-size_rnh'),
+       (4, 'letter-size_ad'),
+       (5, 'letter-size_el');
 
 CREATE TABLE `reference_sentence`
 (
@@ -77,10 +77,10 @@ VALUES (1, 1), (2, 1), (3, 1),(4, 1),(5, 1),(6, 1),(7, 1),(8, 1),(9, 1),(10, 1),
        (1, 4),(2, 4),(5, 4),(6, 4),(7, 4),(8, 4),
        (2, 5),(3, 5),(4, 5),(6, 5),(8, 5),(9, 5),(10, 5);
 
-CREATE TABLE `examples`
+CREATE TABLE `example_pair`
 (
-    `positive_image_path`    text    NOT NULL,
-    `negative_image_path`    text    NOT NULL,
+    `positive_example_image_path`    text    NOT NULL,
+    `negative_example_image_path`    text    NOT NULL,
     `reference_sentence_id`  bigint  NOT NULL,
     `question_id`            bigint  NOT NULL,
     PRIMARY KEY (`reference_sentence_id`, `question_id`),
@@ -91,9 +91,7 @@ CREATE TABLE `examples`
 CREATE TABLE `sample`
 (
     `id`            bigint  NOT NULL AUTO_INCREMENT,
-    `sentence_id`   bigint  NOT NULL,
-    `image_path`    text    NOT NULL,
-    `student_id`    bigint  NOT NULL,
+    `reference_sentence_id`   bigint  NOT NULL,
     PRIMARY KEY (`id`)
 );
 
