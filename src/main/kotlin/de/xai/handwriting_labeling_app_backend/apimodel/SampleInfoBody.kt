@@ -1,7 +1,7 @@
 package de.xai.handwriting_labeling_app_backend.apimodel
 
 import de.xai.handwriting_labeling_app_backend.model.Sample
-import de.xai.handwriting_labeling_app_backend.service.SampleService
+import de.xai.handwriting_labeling_app_backend.repository.SampleRepository
 
 
 data class SampleInfoBody(
@@ -16,7 +16,7 @@ data class SampleInfoBody(
                 id = sample.id,
                 studentId = sample.studentId,
                 referenceSentence = if (sample.referenceSentence == null) {null} else {ReferenceSentenceInfoBody.fromReferenceSentence(sample.referenceSentence)},
-                resourceUrl = SampleService.getResourceUrl(sample)
+                resourceUrl = SampleRepository.getResourceUrl(sample)
             )
         }
     }

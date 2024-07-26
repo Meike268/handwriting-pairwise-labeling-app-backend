@@ -1,13 +1,12 @@
-package de.xai.handwriting_labeling_app_backend.service
+package de.xai.handwriting_labeling_app_backend.repository
 
 import de.xai.handwriting_labeling_app_backend.model.Sample
-import de.xai.handwriting_labeling_app_backend.repository.ReferenceSentenceRepository
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Repository
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.io.File
 
-@Service
-class SampleService(
+@Repository
+class SampleRepository(
     private val referenceSentenceRepository: ReferenceSentenceRepository
 ) {
     private final val samplesDir = File("src/main/resources/public/files/images/samples")
