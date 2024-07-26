@@ -1,8 +1,11 @@
 package de.xai.handwriting_labeling_app_backend.repository
 
 import de.xai.handwriting_labeling_app_backend.model.Sample
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesUrl
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesDir
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectoryName
 import org.springframework.stereotype.Repository
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -17,7 +20,7 @@ class SampleRepository(
 
         val studentId = file.name.split("_")[0].toLong()
         val sampleId = file.name.split("_")[1].replace(".png", "").toLong()
-        return if (file.parentFile.parentFile == xaiSentencesDir)
+        return if (file.parentFile.parentFile == xaiSentencesDirectory)
             Sample(sampleId, studentId, referenceSentenceRepository.findById(file.parentFile.name.toLong()).get())
         else
             Sample(sampleId, studentId, null)
@@ -48,29 +51,22 @@ class SampleRepository(
     }
 
     companion object {
-        private val samplesDir = File("src/main/resources/public/files/images/samples")
-        private val xaiSentencesDir = File(samplesDir.path + "/xai_sentences")
-
-        fun getResourceUrl(id: Long, studentId: Long, referenceSentenceId: Long?): String {
-            val baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
-            val sampleUrl = "$baseUrl/files/images/samples"
-
+        private fun path(id: Long, studentId: Long, referenceSentenceId: Long?): String {
             return if (referenceSentenceId != null) {
-                "$sampleUrl/xai_sentences/${referenceSentenceId}/${studentId}_${id}.png"
+                "/$xaiSentencesDirectoryName/${referenceSentenceId}/${studentId}_${id}.png"
             } else {
-                "$sampleUrl/others/${studentId}_${id}.png"
+                "$samplesUrl/others/${studentId}_${id}.png"
             }
+        }
+        fun getResourceUrl(id: Long, studentId: Long, referenceSentenceId: Long?): String {
+            return "$samplesUrl${path(id, studentId, referenceSentenceId)}"
         }
         fun getResourceUrl(sample: Sample): String {
             return getResourceUrl(sample.id, sample.studentId, sample.referenceSentence?.id)
         }
 
         fun getResourceFile(id: Long, studentId: Long, referenceSentenceId: Long?): File {
-            return File(if (referenceSentenceId != null) {
-                "$xaiSentencesDir/${referenceSentenceId}/${studentId}_${id}.png"
-            } else {
-                "$samplesDir/others/${studentId}_${id}.png"
-            })
+            return File("$samplesDir${path(id, studentId, referenceSentenceId)}")
         }
         fun getResourceFile(sample: Sample): File {
             return getResourceFile(sample.id, sample.studentId, sample.referenceSentence?.id)
