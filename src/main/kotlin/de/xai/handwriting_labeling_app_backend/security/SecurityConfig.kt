@@ -23,9 +23,9 @@ class SecurityConfig (val env: Environment) {
             authorizeHttpRequests {
                 authorize("/ping", permitAll)
                 authorize("/files/**", authenticated)
+
+                authorize("/users", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/addOne", hasRole("ADMIN"))
-                authorize("/users/", hasRole("ADMIN"))
-                authorize(HttpMethod.PUT, "/greeting", hasRole("USER"))
                 authorize(HttpMethod.POST, "/users/login", authenticated)
             }
             httpBasic { }
