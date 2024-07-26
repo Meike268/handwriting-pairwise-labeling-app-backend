@@ -5,8 +5,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 
 data class ExamplePairInfoBody(
-    val positiveSource: String,
-    val negativeSource: String,
+    val positiveResourceUrl: String,
+    val negativeResourceUrl: String,
 ) {
 
     // TODO make this not suck so bad by having a good idea on how to structure the ExamplePairs
@@ -16,8 +16,8 @@ data class ExamplePairInfoBody(
             val examplesUrl = "$baseUrl/files/images/examples"
 
             return ExamplePairInfoBody(
-                positiveSource = "${examplesUrl}/${examplePair.positiveExampleImagePath}",
-                negativeSource = "${examplesUrl}/${examplePair.negativeExampleImagePath}"
+                positiveResourceUrl = "${examplesUrl}/${examplePair.positiveExampleImagePath}",
+                negativeResourceUrl = "${examplesUrl}/${examplePair.negativeExampleImagePath}"
             )
         }
     }
