@@ -1,8 +1,8 @@
 package de.xai.handwriting_labeling_app_backend.service
 
+import de.xai.handwriting_labeling_app_backend.apimodel.SampleInfoBody
 import de.xai.handwriting_labeling_app_backend.apimodel.TaskBatchInfoBody
 import de.xai.handwriting_labeling_app_backend.repository.QuestionRepository
-import de.xai.handwriting_labeling_app_backend.repository.SampleRepository
 import de.xai.handwriting_labeling_app_backend.repository.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 class BatchService(
     private val questionRepository: QuestionRepository,
     private val userRepository: UserRepository,
-    private val sampleRepository: SampleRepository
+    private val sampleService: SampleService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -21,7 +21,7 @@ class BatchService(
 
         return TaskBatchInfoBody(
             question = questionRepository.findAll()[0],
-            samples = sampleRepository.findAll()
+            samples = sampleService.findAll().map { SampleInfoBody.fromSample(it) }.toList()
         )
     }
 }

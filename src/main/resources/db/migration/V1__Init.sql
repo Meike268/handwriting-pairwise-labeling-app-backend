@@ -88,13 +88,6 @@ CREATE TABLE `example_pair`
     FOREIGN KEY (`question_id`) REFERENCES `question` (`id`)
 );
 
-CREATE TABLE `sample`
-(
-    `id`            bigint  NOT NULL AUTO_INCREMENT,
-    `reference_sentence_id`   bigint  NOT NULL,
-    PRIMARY KEY (`id`)
-);
-
 CREATE TABLE `answer` (
     `user_id` bigint NOT NULL,
     `sample_id` bigint NOT NULL,
@@ -102,6 +95,5 @@ CREATE TABLE `answer` (
     `score` tinyint NOT NULL,
     PRIMARY KEY (`user_id`, `sample_id`, `question_id`),
     FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
-    FOREIGN KEY (`sample_id`) REFERENCES `sample` (`id`),
     FOREIGN KEY (`question_id`) REFERENCES `question` (`id`)
 );
