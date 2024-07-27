@@ -9,6 +9,24 @@ import org.springframework.stereotype.Repository
 import java.io.File
 import java.io.FileNotFoundException
 
+/**
+ * This repo does not store samples as entities to the db, but serves as a layer on top of the underlying data folder
+ * structure.
+ *
+ * All sample images are located at resources/public/files/images/samples .
+ * The "xai_sentences" directory contains 10 subdirectories, each containing handwriting samples of one reference
+ * sentence.
+ *
+ * resources/public/files/images/samples
+ *          - other
+ *          - xai_sentences
+ *              - 1
+ *                  - <student_id>_<unique_sample_id>.png
+ *                  - ...
+ *              - 2
+ *              ...
+ *              -10
+ * */
 @Repository
 class SampleRepository(
     private val referenceSentenceRepository: ReferenceSentenceRepository
@@ -32,6 +50,15 @@ class SampleRepository(
                 null
             else
                 this.fromFile(nestedDirectoryOrFile)
+        }.toList()
+    }
+
+    fun findAllInDirectory(directory: File): List<Sample> {
+        return directory.walk()
+            .filter { it.isFile }
+            .filter { !it.name.startsWith(".")}
+            .map { nestedDirectoryOrFile ->
+            this.fromFile(nestedDirectoryOrFile)
         }.toList()
     }
 

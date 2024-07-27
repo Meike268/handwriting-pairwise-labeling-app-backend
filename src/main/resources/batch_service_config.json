@@ -1,0 +1,27 @@
+{
+  "samplesOrigin": "xai_sentences",
+  "prioritizedReferenceSentences": [
+    {
+      "referenceSentencesId": 1,
+      "priorityPercentage": 40
+    },
+    {
+      "referenceSentencesId": 2,
+      "priorityPercentage": 30
+    },
+    {
+      "referenceSentencesId": 3,
+      "priorityPercentage": 30
+    }
+  ],
+  "prioritizedQuestions": [
+    {
+      "questionId": 1,
+      "priority": 1
+    },
+    {
+      "questionId": 2,
+      "priority": 2
+    }
+  ]
+}

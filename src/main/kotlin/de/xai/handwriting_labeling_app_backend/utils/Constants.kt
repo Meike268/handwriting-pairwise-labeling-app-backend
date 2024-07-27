@@ -8,6 +8,8 @@ class Constants {
         val samplesDir = File("src/main/resources/public/files/images/samples")
         val xaiSentencesDirectoryName = "xai_sentences"
         val xaiSentencesDirectory = File("${samplesDir.path}/$xaiSentencesDirectoryName")
+        val othersDirectoryName = "others"
+        val othersDirectory = File("${samplesDir.path}/$othersDirectoryName")
         val baseUrl: String
             get() = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
         val samplesUrl = "$baseUrl/files/images/samples"
