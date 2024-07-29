@@ -2,9 +2,9 @@ package de.xai.handwriting_labeling_app_backend.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.xai.handwriting_labeling_app_backend.model.BatchServiceConfig
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.batchServiceConfigFile
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Repository
-import java.io.File
 
 @Repository
 class BatchServiceConfigRepository(
@@ -15,7 +15,7 @@ class BatchServiceConfigRepository(
 
     fun getConfig(): BatchServiceConfig {
 
-        val configJsonString: String = File("./src/main/resources/batch_service_config.json").readText(Charsets.UTF_8)
+        val configJsonString: String = batchServiceConfigFile.readText(Charsets.UTF_8)
         val config = ObjectMapper().readValue(configJsonString, BatchServiceConfig::class.java)
 
         validateSentencePrio(config)

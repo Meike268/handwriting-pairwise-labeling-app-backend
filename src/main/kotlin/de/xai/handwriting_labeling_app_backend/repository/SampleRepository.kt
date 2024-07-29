@@ -1,10 +1,10 @@
 package de.xai.handwriting_labeling_app_backend.repository
 
 import de.xai.handwriting_labeling_app_backend.model.Sample
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesUrl
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesDir
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesDirectory
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectoryName
 import org.springframework.stereotype.Repository
 import java.io.File
 import java.io.FileNotFoundException
@@ -45,7 +45,7 @@ class SampleRepository(
     }
 
     fun findAll(): List<Sample> {
-        return samplesDir.walk().mapNotNull { nestedDirectoryOrFile ->
+        return samplesDirectory.walk().mapNotNull { nestedDirectoryOrFile ->
             if (nestedDirectoryOrFile.isDirectory)
                 null
             else
@@ -53,9 +53,10 @@ class SampleRepository(
         }.toList()
     }
 
-    fun findAllInDirectory(directory: File): List<Sample> {
+    fun findAllInDirectoryRecursive(directory: File): List<Sample> {
         return directory.walk()
             .filter { it.isFile }
+            // mac creates .DS_store files in folders that need to be ignored
             .filter { !it.name.startsWith(".")}
             .map { nestedDirectoryOrFile ->
             this.fromFile(nestedDirectoryOrFile)
@@ -80,7 +81,7 @@ class SampleRepository(
     companion object {
         private fun path(id: Long, studentId: Long, referenceSentenceId: Long?): String {
             return if (referenceSentenceId != null) {
-                "/$xaiSentencesDirectoryName/${referenceSentenceId}/${studentId}_${id}.png"
+                "/$XAI_SENTENCE_DIRECTORY_NAME/${referenceSentenceId}/${studentId}_${id}.png"
             } else {
                 "$samplesUrl/others/${studentId}_${id}.png"
             }
@@ -93,7 +94,7 @@ class SampleRepository(
         }
 
         fun getResourceFile(id: Long, studentId: Long, referenceSentenceId: Long?): File {
-            return File("$samplesDir${path(id, studentId, referenceSentenceId)}")
+            return File("$samplesDirectory${path(id, studentId, referenceSentenceId)}")
         }
         fun getResourceFile(sample: Sample): File {
             return getResourceFile(sample.id, sample.studentId, sample.referenceSentence?.id)

@@ -7,6 +7,9 @@ data class BatchServiceConfig(
     @JsonProperty("samplesOrigin")
     var samplesOrigin: String,
 
+    @JsonProperty("batchSize")
+    var batchSize: Int,
+
     @JsonProperty("prioritizedReferenceSentences")
     var prioritizedReferenceSentences: List<PrioritizedReferenceSentence>,
 

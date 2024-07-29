@@ -1,5 +1,6 @@
 {
   "samplesOrigin": "xai_sentences",
+  "batchSize": 10,
   "prioritizedReferenceSentences": [
     {
       "referenceSentencesId": 1,

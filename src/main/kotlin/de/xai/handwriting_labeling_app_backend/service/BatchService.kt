@@ -7,9 +7,9 @@ import de.xai.handwriting_labeling_app_backend.apimodel.TaskBatchInfoBody
 import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectory
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectoryName
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.OTHERS_DIRECTORY_NAME
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectoryName
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.File
@@ -28,20 +28,19 @@ class BatchService(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     fun generateBatch(username: String): TaskBatchInfoBody {
-        val batchSize = 10
 
         val user = userRepository.findByUsername(username)
         logger.info("Generating random batch for user $user")
 
-        val prioConfig = batchServiceConfigRepository.getConfig()
+        val config = batchServiceConfigRepository.getConfig()
 
-        val samplesDirectory = when (prioConfig.samplesOrigin) {
-            xaiSentencesDirectoryName -> xaiSentencesDirectory
-            othersDirectoryName -> othersDirectory
-            else -> throw IllegalArgumentException("Sample origin is not supported. No directory corresponds to ${prioConfig.samplesOrigin}")
+        val samplesDirectory = when (config.samplesOrigin) {
+            XAI_SENTENCE_DIRECTORY_NAME -> xaiSentencesDirectory
+            OTHERS_DIRECTORY_NAME -> othersDirectory
+            else -> throw IllegalArgumentException("Sample origin is not supported. No directory corresponds to ${config.samplesOrigin}")
         }
 
-        val batchQuestion = determineQuestionForBatch(user?.id!!, prioConfig, samplesDirectory)
+        val batchQuestion = determineQuestionForBatch(user?.id!!, config, samplesDirectory)
 
         if (batchQuestion == null) {
             //ToDo: Handle case when user has no more unanswered samples
@@ -50,20 +49,20 @@ class BatchService(
 
         val unansweredSamples = getSamplesUserDidNotAnswerQuestionFor(user.id, batchQuestion, samplesDirectory)
 
-        val batchReferenceSentence = determineReferenceSentenceForBatch(prioConfig, unansweredSamples)
+        val batchReferenceSentence = determineReferenceSentenceForBatch(config, unansweredSamples)
 
         if (batchReferenceSentence == null) {
             //ToDo: Handle case when user has no more unanswered samples
             throw IllegalStateException("No unanswered samples for this user and the sentences prioritized in config.")
         }
 
-        val examplePair = examplePairRepository.findByReferenceSentenceAndQuestion(batchReferenceSentence!!, batchQuestion)
+        val examplePair = examplePairRepository.findByReferenceSentenceAndQuestion(batchReferenceSentence, batchQuestion)
         //val samples = sampleRepository.findAll().map { SampleInfoBody.fromSample(it) }.toList()
         //val samples = sampleRepository.findAllInDirectory(samplesDirectory).map { SampleInfoBody.fromSample(it) }.toList()
 
         val samples = unansweredSamples.filter { sample ->
             sample.referenceSentence == batchReferenceSentence
-        }.shuffled().take(batchSize).map { SampleInfoBody.fromSample(it) }
+        }.shuffled().take(config.batchSize).map { SampleInfoBody.fromSample(it) }
 
         return TaskBatchInfoBody(
             question = batchQuestion,
@@ -107,11 +106,9 @@ class BatchService(
     }
 
     private fun getSamplesUserDidNotAnswerQuestionFor(userId: Long, batchQuestion: Question, samplesDirectory: File): List<Sample> {
-        val answersToQuestionByUser = answerRepository.findAllByUserId(userId).filter { answer ->
-            answer.question?.id == batchQuestion.id
-        }
+        val answersToQuestionByUser = answerRepository.findAllByUserIdAndQuestionId(userId, batchQuestion.id!!)
 
-        val unansweredSamples = sampleRepository.findAllInDirectory(samplesDirectory).filter { sample ->
+        val unansweredSamples = sampleRepository.findAllInDirectoryRecursive(samplesDirectory).filter { sample ->
             !sampleHasQuestionAnswer(sample, answersToQuestionByUser)
         }
 
