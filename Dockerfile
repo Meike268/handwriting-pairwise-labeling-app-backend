@@ -1,0 +1,12 @@
+FROM eclipse-temurin:21.0.2_13-jdk-jammy AS builder
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline
+COPY ./src ./src
+RUN ./mvnw clean install -Pskip-tests
+
+FROM eclipse-temurin:21.0.2_13-jre-jammy AS final
+WORKDIR /usr/handwriting-labeling-app
+COPY src/main/resources src/main/resources
+COPY --from=builder ./target/*.jar *.jar
+ENTRYPOINT ["java", "-jar", "./*.jar"]
