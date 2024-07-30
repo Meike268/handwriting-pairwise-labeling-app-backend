@@ -4,7 +4,7 @@ import de.xai.handwriting_labeling_app_backend.apimodel.ExamplePairInfoBody
 import de.xai.handwriting_labeling_app_backend.apimodel.ReferenceSentenceInfoBody
 import de.xai.handwriting_labeling_app_backend.apimodel.SampleInfoBody
 import de.xai.handwriting_labeling_app_backend.apimodel.TaskBatchInfoBody
-import de.xai.handwriting_labeling_app_backend.component.ConfigHandler
+import de.xai.handwriting_labeling_app_backend.component.BatchConfigHandler
 import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectory
@@ -24,7 +24,7 @@ class BatchService(
     private val referenceSentenceRepository: ReferenceSentenceRepository,
     private val examplePairRepository: ExamplePairRepository,
     private val answerRepository: AnswerRepository,
-    private val configHandler: ConfigHandler
+    private val configHandler: BatchConfigHandler
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
