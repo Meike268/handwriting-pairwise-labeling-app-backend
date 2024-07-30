@@ -37,5 +37,10 @@ class Constants {
         val baseUrl: String
             get() = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
         val samplesUrl = "$baseUrl/files/images/samples"
+
+
+        const val GET_BATCH_RESPONSE_STATE_SUCCESS = "success"
+
+        const val GET_BATCH_RESPONSE_STATE_FINISHED = "finished"
     }
 }
