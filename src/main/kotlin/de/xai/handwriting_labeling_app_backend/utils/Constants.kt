@@ -6,10 +6,10 @@ import java.io.File
 class Constants {
     companion object {
         /**
-        * path to the root directory where sample images are stored.
+         * path to the root directory where sample images are stored.
          * Under this root dir, there are sub dirs for different kinds of samples.
-        */
-        const val SAMPLES_DIR_PATH = "src/main/resources/public/files/images/samples"
+         */
+        const val SAMPLES_DIR_PATH = "./src/main/resources/public/files/images/samples"
         val samplesDirectory = File(SAMPLES_DIR_PATH)
 
         /**
