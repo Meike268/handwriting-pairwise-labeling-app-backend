@@ -1,14 +1,32 @@
 package de.xai.handwriting_labeling_app_backend.repository
 
 import de.xai.handwriting_labeling_app_backend.model.Sample
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesUrl
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesDir
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesDirectory
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectoryName
 import org.springframework.stereotype.Repository
 import java.io.File
 import java.io.FileNotFoundException
 
+/**
+ * This repo does not store samples as entities to the db, but serves as a layer on top of the underlying data folder
+ * structure.
+ *
+ * All sample images are located at resources/public/files/images/samples .
+ * The "xai_sentences" directory contains 10 subdirectories, each containing handwriting samples of one reference
+ * sentence.
+ *
+ * resources/public/files/images/samples
+ *          - other
+ *          - xai_sentences
+ *              - 1
+ *                  - <student_id>_<unique_sample_id>.png
+ *                  - ...
+ *              - 2
+ *              ...
+ *              -10
+ * */
 @Repository
 class SampleRepository(
     private val referenceSentenceRepository: ReferenceSentenceRepository
@@ -27,11 +45,21 @@ class SampleRepository(
     }
 
     fun findAll(): List<Sample> {
-        return samplesDir.walk().mapNotNull { nestedDirectoryOrFile ->
+        return samplesDirectory.walk().mapNotNull { nestedDirectoryOrFile ->
             if (nestedDirectoryOrFile.isDirectory)
                 null
             else
                 this.fromFile(nestedDirectoryOrFile)
+        }.toList()
+    }
+
+    fun findAllInDirectoryRecursive(directory: File): List<Sample> {
+        return directory.walk()
+            .filter { it.isFile }
+            // mac creates .DS_store files in folders that need to be ignored
+            .filter { !it.name.startsWith(".")}
+            .map { nestedDirectoryOrFile ->
+            this.fromFile(nestedDirectoryOrFile)
         }.toList()
     }
 
@@ -53,7 +81,7 @@ class SampleRepository(
     companion object {
         private fun path(id: Long, studentId: Long, referenceSentenceId: Long?): String {
             return if (referenceSentenceId != null) {
-                "/$xaiSentencesDirectoryName/${referenceSentenceId}/${studentId}_${id}.png"
+                "/$XAI_SENTENCE_DIRECTORY_NAME/${referenceSentenceId}/${studentId}_${id}.png"
             } else {
                 "$samplesUrl/others/${studentId}_${id}.png"
             }
@@ -66,7 +94,7 @@ class SampleRepository(
         }
 
         fun getResourceFile(id: Long, studentId: Long, referenceSentenceId: Long?): File {
-            return File("$samplesDir${path(id, studentId, referenceSentenceId)}")
+            return File("$samplesDirectory${path(id, studentId, referenceSentenceId)}")
         }
         fun getResourceFile(sample: Sample): File {
             return getResourceFile(sample.id, sample.studentId, sample.referenceSentence?.id)

@@ -14,6 +14,6 @@ class BatchController(
 ) {
     @GetMapping
     fun getRandomBatch(principal: Principal): TaskBatchInfoBody {
-        return batchService.generateRandomBatch(principal.name)
+        return batchService.generateBatch(principal.name)
     }
 }
