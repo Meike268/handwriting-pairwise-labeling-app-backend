@@ -4,6 +4,7 @@ import de.xai.handwriting_labeling_app_backend.apimodel.ExamplePairInfoBody
 import de.xai.handwriting_labeling_app_backend.apimodel.ReferenceSentenceInfoBody
 import de.xai.handwriting_labeling_app_backend.apimodel.SampleInfoBody
 import de.xai.handwriting_labeling_app_backend.apimodel.TaskBatchInfoBody
+import de.xai.handwriting_labeling_app_backend.component.ConfigHandler
 import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectory
@@ -22,8 +23,8 @@ class BatchService(
     private val sampleRepository: SampleRepository,
     private val referenceSentenceRepository: ReferenceSentenceRepository,
     private val examplePairRepository: ExamplePairRepository,
-    private val batchServiceConfigRepository: BatchServiceConfigRepository,
-    private val answerRepository: AnswerRepository
+    private val answerRepository: AnswerRepository,
+    private val configHandler: ConfigHandler
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -32,7 +33,8 @@ class BatchService(
         val user = userRepository.findByUsername(username)
         logger.info("Generating random batch for user $user")
 
-        val config = batchServiceConfigRepository.getConfig()
+        val config = configHandler.readBatchServiceConfig()
+
 
         val samplesDirectory = when (config.samplesOrigin) {
             XAI_SENTENCE_DIRECTORY_NAME -> xaiSentencesDirectory
@@ -57,8 +59,6 @@ class BatchService(
         }
 
         val examplePair = examplePairRepository.findByReferenceSentenceAndQuestion(batchReferenceSentence, batchQuestion)
-        //val samples = sampleRepository.findAll().map { SampleInfoBody.fromSample(it) }.toList()
-        //val samples = sampleRepository.findAllInDirectory(samplesDirectory).map { SampleInfoBody.fromSample(it) }.toList()
 
         val samples = unansweredSamples.filter { sample ->
             sample.referenceSentence == batchReferenceSentence
@@ -74,7 +74,7 @@ class BatchService(
 
     private fun determineQuestionForBatch(userId: Long, config: BatchServiceConfig, samplesDirectory: File): Question? {
 
-        val possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList()
+        val possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList()//config.prioritizedQuestions.toMutableList()
 
         while (possiblePrioritizedQuestions.isNotEmpty()) {
             val highestQuestionPriority = possiblePrioritizedQuestions.minOfOrNull { it.priority }

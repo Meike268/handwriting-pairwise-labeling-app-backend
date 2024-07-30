@@ -1,21 +1,32 @@
 package de.xai.handwriting_labeling_app_backend.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.ObjectMapper
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.batchServiceConfigFile
 import java.io.Serializable
 
 data class BatchServiceConfig(
     @JsonProperty("samplesOrigin")
-    var samplesOrigin: String,
+    val samplesOrigin: String,
 
     @JsonProperty("batchSize")
-    var batchSize: Int,
+    val batchSize: Int,
 
     @JsonProperty("prioritizedReferenceSentences")
-    var prioritizedReferenceSentences: List<PrioritizedReferenceSentence>,
+    val prioritizedReferenceSentences: List<PrioritizedReferenceSentence>,
 
     @JsonProperty("prioritizedQuestions")
-    var prioritizedQuestions: List<PrioritizedQuestion>
-) : Serializable
+    val prioritizedQuestions: List<PrioritizedQuestion>
+) : Serializable {
+    companion object {
+
+        fun fromFile(): BatchServiceConfig {
+            return batchServiceConfigFile.readText(Charsets.UTF_8).let { configString ->
+                ObjectMapper().readValue(configString, BatchServiceConfig::class.java)
+            }
+        }
+    }
+}
 
 data class PrioritizedReferenceSentence(
     @JsonProperty("referenceSentencesId")
@@ -31,4 +42,6 @@ data class PrioritizedQuestion(
     // 1 = highest priority, 2 = second highest priority, ...
     @JsonProperty("priorityPercentage")
     val priority: Int
+
 ) : Serializable
+
