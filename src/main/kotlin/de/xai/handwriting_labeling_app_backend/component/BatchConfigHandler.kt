@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class ConfigHandler(
+class BatchConfigHandler(
     private val questionRepository: QuestionRepository,
     private val referenceSentenceRepository: ReferenceSentenceRepository
 ) {
