@@ -2,8 +2,8 @@ package de.xai.handwriting_labeling_app_backend.repository
 
 import de.xai.handwriting_labeling_app_backend.model.Sample
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesUrl
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesDirectory
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesUrl
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
 import org.springframework.stereotype.Repository
 import java.io.File
@@ -45,22 +45,23 @@ class SampleRepository(
     }
 
     fun findAll(): List<Sample> {
-        return samplesDirectory.walk().mapNotNull { nestedDirectoryOrFile ->
-            if (nestedDirectoryOrFile.isDirectory)
-                null
-            else
-                this.fromFile(nestedDirectoryOrFile)
-        }.toList()
+        return samplesDirectory.walk()
+            .filter { it.isFile }
+            // mac creates .DS_store files in folders that need to be ignored
+            .filter { !it.name.startsWith(".") }
+            .map { nestedFile ->
+                this.fromFile(nestedFile)
+            }.toList()
     }
 
     fun findAllInDirectoryRecursive(directory: File): List<Sample> {
         return directory.walk()
             .filter { it.isFile }
             // mac creates .DS_store files in folders that need to be ignored
-            .filter { !it.name.startsWith(".")}
-            .map { nestedDirectoryOrFile ->
-            this.fromFile(nestedDirectoryOrFile)
-        }.toList()
+            .filter { !it.name.startsWith(".") }
+            .map { nestedFile ->
+                this.fromFile(nestedFile)
+            }.toList()
     }
 
     fun findById(id: Long): Sample? {
@@ -86,9 +87,11 @@ class SampleRepository(
                 "$samplesUrl/others/${studentId}_${id}.png"
             }
         }
+
         fun getResourceUrl(id: Long, studentId: Long, referenceSentenceId: Long?): String {
             return "$samplesUrl${path(id, studentId, referenceSentenceId)}"
         }
+
         fun getResourceUrl(sample: Sample): String {
             return getResourceUrl(sample.id, sample.studentId, sample.referenceSentence?.id)
         }
@@ -96,6 +99,7 @@ class SampleRepository(
         fun getResourceFile(id: Long, studentId: Long, referenceSentenceId: Long?): File {
             return File("$samplesDirectory${path(id, studentId, referenceSentenceId)}")
         }
+
         fun getResourceFile(sample: Sample): File {
             return getResourceFile(sample.id, sample.studentId, sample.referenceSentence?.id)
         }
