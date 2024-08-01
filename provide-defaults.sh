@@ -16,3 +16,26 @@ MYSQL_PASSWORD=xxxxxxxxxxxxxxx
 " \
 > "$ENV_FILE"
 fi
+
+CONFIG_FILE=src/main/resources/batch_service_config.json
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo \
+"{
+   \"samplesOrigin\": \"xai_sentences\",
+   \"batchSize\": 10,
+   \"prioritizedReferenceSentences\": [
+     {
+       \"referenceSentencesId\": 1,
+       \"priorityPercentage\": 40
+     }
+   ],
+   \"prioritizedQuestions\": [
+     {
+       \"questionId\": 1,
+       \"priority\": 1
+     }
+   ]
+ }
+" \
+> "$CONFIG_FILE"
+fi

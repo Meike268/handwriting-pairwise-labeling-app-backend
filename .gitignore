@@ -33,3 +33,4 @@ build/
 .vscode/
 /.env
 /src/main/resources/public/files/*
+/src/main/resources/batch_service_config.json

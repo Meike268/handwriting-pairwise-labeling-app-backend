@@ -25,6 +25,13 @@ data class BatchServiceConfig(
                 ObjectMapper().readValue(configString, BatchServiceConfig::class.java)
             }
         }
+
+        fun toFile(config: BatchServiceConfig) {
+            batchServiceConfigFile.writeText(
+                ObjectMapper().writeValueAsString(config),
+                Charsets.UTF_8
+            )
+        }
     }
 }
 
