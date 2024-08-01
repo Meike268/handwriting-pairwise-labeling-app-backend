@@ -1,12 +1,11 @@
 package de.xai.handwriting_labeling_app_backend.service
 
-import de.xai.handwriting_labeling_app_backend.apimodel.ExamplePairInfoBody
-import de.xai.handwriting_labeling_app_backend.apimodel.ReferenceSentenceInfoBody
-import de.xai.handwriting_labeling_app_backend.apimodel.SampleInfoBody
-import de.xai.handwriting_labeling_app_backend.apimodel.TaskBatchInfoBody
+import de.xai.handwriting_labeling_app_backend.apimodel.*
 import de.xai.handwriting_labeling_app_backend.component.BatchConfigHandler
 import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_FINISHED
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_SUCCESS
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectory
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.OTHERS_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
@@ -28,7 +27,7 @@ class BatchService(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    fun generateBatch(username: String): TaskBatchInfoBody {
+    fun generateBatch(username: String): GetBatchResponseBody {
 
         val user = userRepository.findByUsername(username)
         logger.info("Generating random batch for user $user")
@@ -45,8 +44,7 @@ class BatchService(
         val batchQuestion = determineQuestionForBatch(user?.id!!, config, samplesDirectory)
 
         if (batchQuestion == null) {
-            //ToDo: Handle case when user has no more unanswered samples
-            throw IllegalStateException("No unanswered samples for this user and the questions prioritized in config.")
+            return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
         }
 
         val unansweredSamples = getSamplesUserDidNotAnswerQuestionFor(user.id, batchQuestion, samplesDirectory)
@@ -54,8 +52,7 @@ class BatchService(
         val batchReferenceSentence = determineReferenceSentenceForBatch(config, unansweredSamples)
 
         if (batchReferenceSentence == null) {
-            //ToDo: Handle case when user has no more unanswered samples
-            throw IllegalStateException("No unanswered samples for this user and the sentences prioritized in config.")
+            return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
         }
 
         val examplePair = examplePairRepository.findByReferenceSentenceAndQuestion(batchReferenceSentence, batchQuestion)
@@ -64,11 +61,14 @@ class BatchService(
             sample.referenceSentence == batchReferenceSentence
         }.shuffled().take(config.batchSize).map { SampleInfoBody.fromSample(it) }
 
-        return TaskBatchInfoBody(
-            question = batchQuestion,
-            referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(batchReferenceSentence),
-            examplePair = ExamplePairInfoBody.fromExamplePair(examplePair!!),
-            samples = samples
+        return GetBatchResponseBody(
+            state = GET_BATCH_RESPONSE_STATE_SUCCESS,
+            body = TaskBatchInfoBody(
+                question = batchQuestion,
+                referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(batchReferenceSentence),
+                examplePair = ExamplePairInfoBody.fromExamplePair(examplePair!!),
+                samples = samples
+            )
         )
     }
 
