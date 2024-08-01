@@ -47,8 +47,6 @@ class SampleRepository(
     fun findAll(): List<Sample> {
         return samplesDirectory.walk()
             .filter { it.isFile }
-            // mac creates .DS_store files in folders that need to be ignored
-            .filter { !it.name.startsWith(".") }
             .map { nestedFile ->
                 this.fromFile(nestedFile)
             }.toList()
@@ -57,8 +55,6 @@ class SampleRepository(
     fun findAllInDirectoryRecursive(directory: File): List<Sample> {
         return directory.walk()
             .filter { it.isFile }
-            // mac creates .DS_store files in folders that need to be ignored
-            .filter { !it.name.startsWith(".") }
             .map { nestedFile ->
                 this.fromFile(nestedFile)
             }.toList()
