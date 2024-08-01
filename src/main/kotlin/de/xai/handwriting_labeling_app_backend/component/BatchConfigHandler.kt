@@ -23,8 +23,13 @@ class BatchConfigHandler(
         return config
     }
 
-    fun writeBatchServiceConfig(batchServiceConfig: BatchServiceConfig) {
-        //ToDo: Do when implementing the REST endpoint
+    fun writeBatchServiceConfig(config: BatchServiceConfig): BatchServiceConfig {
+        validateSentencePrioAgainstDB(config, referenceSentenceRepository)
+        validateQuestionPrio(config, questionRepository)
+
+        BatchServiceConfig.toFile(config)
+
+        return readBatchServiceConfig()
     }
 
     private fun validateSentencePrioAgainstDB(
