@@ -12,7 +12,7 @@ class BatchConfigController(
 ) {
 
     @GetMapping
-    fun getAllUsers(): BatchServiceConfig {
+    fun getConfig(): BatchServiceConfig {
         return batchConfigHandler.readBatchServiceConfig()
     }
 

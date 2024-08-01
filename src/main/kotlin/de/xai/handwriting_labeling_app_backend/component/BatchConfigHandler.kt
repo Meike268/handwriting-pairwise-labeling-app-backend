@@ -14,14 +14,7 @@ class BatchConfigHandler(
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    fun readBatchServiceConfig(): BatchServiceConfig {
-        val config = BatchServiceConfig.fromFile()
-
-        validateSentencePrioAgainstDB(config, referenceSentenceRepository)
-        validateQuestionPrio(config, questionRepository)
-
-        return config
-    }
+    fun readBatchServiceConfig(): BatchServiceConfig = BatchServiceConfig.fromFile()
 
     fun writeBatchServiceConfig(config: BatchServiceConfig): BatchServiceConfig {
         validateSentencePrioAgainstDB(config, referenceSentenceRepository)
@@ -42,8 +35,8 @@ class BatchConfigHandler(
             try {
                 referenceSentenceRepository.findById(sentencePrio.referenceSentencesId).get()
                 totalSentencePrioPercentage += sentencePrio.priorityPercentage
-            } catch (e: NoSuchElementException) {
-                logger.error("BatchServiceConfig not in sync with reference sentences in db./n${e.message}")
+            } catch (err: NoSuchElementException) {
+                logger.error("BatchServiceConfig not in sync with reference sentences in db./n${err.message}", err)
             }
         }
         assert(totalSentencePrioPercentage == 100)
@@ -53,8 +46,8 @@ class BatchConfigHandler(
         for (questionPrio in config.prioritizedQuestions) {
             try {
                 questionRepository.findById(questionPrio.questionId).get()
-            } catch (e: NoSuchElementException) {
-                logger.error("BatchServiceConfig not in sync with questions in db./n${e.message}")
+            } catch (err: NoSuchElementException) {
+                logger.error("BatchServiceConfig not in sync with questions in db./n${err.message}", err)
             }
         }
     }
