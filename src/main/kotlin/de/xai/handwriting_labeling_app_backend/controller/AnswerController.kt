@@ -1,6 +1,7 @@
 package de.xai.handwriting_labeling_app_backend.controller
 
 import de.xai.handwriting_labeling_app_backend.apimodel.AnswerCreateBody
+import de.xai.handwriting_labeling_app_backend.apimodel.ExportAnswersBody
 import de.xai.handwriting_labeling_app_backend.model.Answer
 import de.xai.handwriting_labeling_app_backend.service.AnswerService
 import org.slf4j.LoggerFactory
@@ -39,5 +40,12 @@ class AnswerController(
             answer.questionId,
             answer.score
         ))
+    }
+
+    @GetMapping("/xai_sentences")
+    fun getXAiAnswers(): ResponseEntity<ExportAnswersBody> {
+        return ResponseEntity.ok(
+            answerService.getAnswersForXAiSentences()
+        )
     }
 }
