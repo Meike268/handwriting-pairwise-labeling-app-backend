@@ -33,6 +33,9 @@ class SecurityConfig (val env: Environment) {
                 authorize(HttpMethod.GET, "/answers/xai_sentences", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/answers", hasRole("USER"))
                 authorize(HttpMethod.PUT, "/answers", hasRole("USER"))
+
+                authorize(HttpMethod.GET, "/config", hasRole("ADMIN"))
+                authorize(HttpMethod.POST, "/config", hasRole("ADMIN"))
             }
             httpBasic { }
             csrf { disable() }
