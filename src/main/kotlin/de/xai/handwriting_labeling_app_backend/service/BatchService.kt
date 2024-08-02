@@ -6,14 +6,16 @@ import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_FINISHED
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_SUCCESS
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectory
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.OTHERS_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectory
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.roleExpert
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.roleUser
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.File
-import kotlin.random.Random
+import kotlin.jvm.optionals.getOrElse
 
 @Service
 class BatchService(
@@ -28,12 +30,11 @@ class BatchService(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     fun generateBatch(username: String): GetBatchResponseBody {
-
-        val user = userRepository.findByUsername(username)
-        logger.info("Generating random batch for user $user")
-
         val config = configHandler.readBatchServiceConfig()
 
+        val user = userRepository.findByUsername(username)
+            ?: throw IllegalArgumentException("No user found with username: $username")
+        logger.info("Generating random batch for user $user")
 
         val samplesDirectory = when (config.samplesOrigin) {
             XAI_SENTENCE_DIRECTORY_NAME -> xaiSentencesDirectory
@@ -41,108 +42,147 @@ class BatchService(
             else -> throw IllegalArgumentException("Sample origin is not supported. No directory corresponds to ${config.samplesOrigin}")
         }
 
-        val batchQuestion = determineQuestionForBatch(user?.id!!, config, samplesDirectory)
+        val userRoles = user.roles.mapNotNull { it.name }
+        val taskBatchBodyForExpert = if (roleExpert in userRoles) {
+            // user is expert -> first try to generate a batch of samples where expert answer is missing
+            findBatch(
+                targetAnswerCount = config.targetAnswerCount,
+                batchSize = config.batchSize,
+                samplesDirectory = samplesDirectory,
+                userId = user.id!!,
+                userRole = roleExpert,
+                possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
+                possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList()
+            )
+        } else null
+        // if no batch for expert answers was assembled, then create batch where user(=any) answer is missing
+        val taskBatchBody = taskBatchBodyForExpert
+            ?: findBatch(
+                targetAnswerCount = config.targetAnswerCount,
+                batchSize = config.batchSize,
+                samplesDirectory = samplesDirectory,
+                userId = user.id!!,
+                userRole = roleUser,
+                possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
+                possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList()
+            )
 
-        if (batchQuestion == null) {
+
+        if (taskBatchBody == null) {
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
         }
-
-        val unansweredSamples = getSamplesUserDidNotAnswerQuestionFor(user.id, batchQuestion, samplesDirectory)
-
-        val batchReferenceSentence = determineReferenceSentenceForBatch(config, unansweredSamples)
-
-        if (batchReferenceSentence == null) {
-            return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
-        }
-
-        val examplePair = examplePairRepository.findByReferenceSentenceAndQuestion(batchReferenceSentence, batchQuestion)
-
-        val samples = unansweredSamples.filter { sample ->
-            sample.referenceSentence == batchReferenceSentence
-        }.shuffled().take(config.batchSize).map { SampleInfoBody.fromSample(it) }
-
         return GetBatchResponseBody(
             state = GET_BATCH_RESPONSE_STATE_SUCCESS,
-            body = TaskBatchInfoBody(
-                question = batchQuestion,
-                referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(batchReferenceSentence),
-                examplePair = ExamplePairInfoBody.fromExamplePair(examplePair!!),
-                samples = samples
-            )
+            body = taskBatchBody
         )
     }
 
-    private fun determineQuestionForBatch(userId: Long, config: BatchServiceConfig, samplesDirectory: File): Question? {
+    /**
+     *
+     * ## Explanation:
+     * We iterate combinations of question and reference sentence iteratively.
+     * The order is determined by the priorities given in BatchServiceConfig.
+     *
+     * One after the other we try to assemble a batch of samples that refer to the given refSent and quest.
+     *      Thereby we check:
+     *      - is the question applicable to the reference sentence?
+     *      - are there samples for which the user has not posted an answer yet?
+     *      - do the samples not already have enough (targetAnswerCount) answers from users with the given role?
+     *      If there are samples that comply, then a batch is assembled randomly from them.
+     *      If not, then the loop continues with the next combination of quest and refSent
+     * Return null if no batch was assembled for any of the combinations.
+     *
+     *
+     *  ## Known issues/inconsistencies:
+     * - More answers for sample and question then specified in BatchServiceConfig:
+     *      If user A loads a batch and then user B load a batch, than both can have the same sample that is just
+     *      missing one answer in their batch.
+     *      Consequently, both user A and B will send a POST answer for this sample when they label the batch.
+     *      THEN this sample will have more answers than specified in the config. This is because we only check
+     *      the DB state and config when we create a batch. We do not check on POST answer.
+     * */
+    fun findBatch(
+        targetAnswerCount: Int,
+        batchSize: Int,
+        samplesDirectory: File,
+        userId: Long,
+        userRole: String,
+        possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
+        possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>
+    ): TaskBatchInfoBody? {
+        // shuffle before sort, to randomly pick between same priority
+        for (prioritizedQuestion in possiblePrioritizedQuestions.shuffled().sortedBy { it.priority }) {
+            for (prioritizedSentence in possiblePrioritizedSentences.shuffled().sortedBy { it.priority }) {
+                val question = questionRepository.findById(prioritizedQuestion.questionId).getOrElse {
+                    throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
+                }
+                val sentence =
+                    referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId).getOrElse {
+                        throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
+                    }
 
-        val possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList()//config.prioritizedQuestions.toMutableList()
+                if (question !in sentence.applicableQuestions!!) {
+                    // question not applicable to sentence, continue with next sentence
+                    continue
+                }
 
-        while (possiblePrioritizedQuestions.isNotEmpty()) {
-            val highestQuestionPriority = possiblePrioritizedQuestions.minOfOrNull { it.priority }
-            val questionsWithPriority = possiblePrioritizedQuestions.filter { it.priority == highestQuestionPriority }
+                // all samples that correspond to the selected reference sentence
+                val refSentSamples = sampleRepository.findAllInDirectoryRecursive(samplesDirectory).filter { sample ->
+                    sentence.id == sample.referenceSentence?.id
+                }
+                // all samples that correspond to the selected sentence, that the user has not answered the question yet
+                val refSentSamplesNotAnsweredByUser = refSentSamples.filter { sample ->
+                    !sampleHasQuestionAnswerByUser(sample, userId, question.id!!)
+                }
+                if (refSentSamplesNotAnsweredByUser.isEmpty()) {
+                    // the user answered all samples for this sentence and question
+                    continue
+                }
 
-            val questionId = if (questionsWithPriority.isEmpty()) {
-                throw IllegalStateException("No prioritized question to create batch for found.")
-            } else if (questionsWithPriority.size == 1) {
-                questionsWithPriority[0].questionId
-            } else {
-                possiblePrioritizedQuestions[Random.nextInt(1, questionsWithPriority.size)].questionId
-            }
+                val samples = refSentSamplesNotAnsweredByUser
 
-            val selectedQuestion = questionRepository.findById(questionId).get()
+                val samplesToAnswerCount = samples.map { sample ->
+                    val answerToSampleAndQuestion =
+                        answerRepository.findAllByQuestionIdAndSampleId(question.id!!, sample.id)
+                    // only count answers where the answerer has the same role as the user who is currently requesting a new batch
+                    val answerToSampleAndQuestionWithRole = answerToSampleAndQuestion.filter { answer ->
+                        val rolesOfAnswerer = answer.user?.roles?.mapNotNull { it.name } ?: setOf()
+                        userRole in rolesOfAnswerer
+                    }
+                    sample to answerToSampleAndQuestionWithRole.size
+                }
 
-            val unansweredPossibleSamples = getSamplesUserDidNotAnswerQuestionFor(userId, selectedQuestion, samplesDirectory).filter { sample ->
-                // remove also samples form reference sentences that are not in config
-                sample.referenceSentence?.id in config.prioritizedReferenceSentences.map { it.referenceSentencesId }
-            }
+                // start by collecting at least one answer per sample. If all samples have one answer, then collect answers
+                // until every sample has 2 answers, .... until every sample has targetAnswerCount samples.
+                // Then stop collecting answers for this combo of sentence and question
+                for (answerCount in 1..targetAnswerCount) {
+                    val samplesToMakeBatchFrom = samplesToAnswerCount.filter { sampleToCount ->
+                        sampleToCount.second < answerCount
+                    }.map { sampleToCount -> sampleToCount.first }
 
-            if (unansweredPossibleSamples.isNotEmpty()) {
-                return selectedQuestion
-            } else {
-                possiblePrioritizedQuestions.removeIf { it.questionId == questionId }
+                    if (samplesToMakeBatchFrom.isNotEmpty()) {
+                        val batchSamples = samplesToMakeBatchFrom.shuffled().take(batchSize)
+                        val examplePair =
+                            examplePairRepository.findByReferenceSentenceAndQuestion(sentence, question)
+                        return TaskBatchInfoBody(
+                            question = question,
+                            referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
+                            examplePair = ExamplePairInfoBody.fromExamplePair(examplePair!!),
+                            samples = batchSamples.map { SampleInfoBody.fromSample(it) })
+                    }
+                }
             }
         }
-        // no question where the user has unanswered samples for
         return null
     }
 
-    private fun getSamplesUserDidNotAnswerQuestionFor(userId: Long, batchQuestion: Question, samplesDirectory: File): List<Sample> {
-        val answersToQuestionByUser = answerRepository.findAllByUserIdAndQuestionId(userId, batchQuestion.id!!)
-
-        val unansweredSamples = sampleRepository.findAllInDirectoryRecursive(samplesDirectory).filter { sample ->
-            !sampleHasQuestionAnswer(sample, answersToQuestionByUser)
-        }
-
-        return unansweredSamples
-    }
-
-    private fun sampleHasQuestionAnswer(sample: Sample, answers: List<Answer>): Boolean {
-        for (answer in answers) {
+    private fun sampleHasQuestionAnswerByUser(sample: Sample, userId: Long, questionId: Long): Boolean {
+        val userAnswersForQuestion = answerRepository.findAllByUserIdAndQuestionId(userId, questionId)
+        for (answer in userAnswersForQuestion) {
             if (answer.sampleId == sample.id) {
                 return true
             }
         }
         return false
-    }
-
-    private fun determineReferenceSentenceForBatch(config: BatchServiceConfig, unansweredSamples: List<Sample>): ReferenceSentence? {
-
-        val availableReferenceSentenceIds = unansweredSamples.mapNotNull { it.referenceSentence?.id}.toSet()
-        val possibleSentencePrios = config.prioritizedReferenceSentences.filter { it.referenceSentencesId in availableReferenceSentenceIds }
-
-        if (possibleSentencePrios.isEmpty()) {
-            return null
-        }
-
-        val totalPercentageFromAvailablePrios = possibleSentencePrios.map { it.priorityPercentage }.sum()
-
-        val randomNumber = Random.nextInt(1, totalPercentageFromAvailablePrios)
-        var currentBar = 0
-        for (sentencePrio in possibleSentencePrios) {
-            currentBar += sentencePrio.priorityPercentage
-            if (randomNumber <= currentBar) {
-                return referenceSentenceRepository.findById(sentencePrio.referenceSentencesId).get()
-            }
-        }
-        return null
     }
 }

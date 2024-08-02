@@ -12,6 +12,18 @@ data class BatchServiceConfig(
     @JsonProperty("batchSize")
     val batchSize: Int,
 
+    /**
+     * For each applicable combination of sample and question, we need to collect n answers by experts
+     * */
+    @JsonProperty("minExpertAnswerCount")
+    val minExpertAnswerCount: Int,
+
+    /**
+     * For each applicable combination of sample and question, we need to collect n answers by any user
+     * */
+    @JsonProperty("targetAnswerCount")
+    val targetAnswerCount: Int,
+
     @JsonProperty("prioritizedReferenceSentences")
     val prioritizedReferenceSentences: List<PrioritizedReferenceSentence>,
 
@@ -38,8 +50,8 @@ data class BatchServiceConfig(
 data class PrioritizedReferenceSentence(
     @JsonProperty("referenceSentencesId")
     val referenceSentencesId: Long,
-    @JsonProperty("priorityPercentage")
-    val priorityPercentage: Int
+    @JsonProperty("priority")
+    val priority: Int
 ) : Serializable
 
 data class PrioritizedQuestion(
@@ -47,7 +59,7 @@ data class PrioritizedQuestion(
     val questionId: Long,
 
     // 1 = highest priority, 2 = second highest priority, ...
-    @JsonProperty("priorityPercentage")
+    @JsonProperty("priority")
     val priority: Int
 
 ) : Serializable

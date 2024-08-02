@@ -34,7 +34,7 @@ class BatchConfigHandler(
         for (sentencePrio in config.prioritizedReferenceSentences) {
             try {
                 referenceSentenceRepository.findById(sentencePrio.referenceSentencesId).get()
-                totalSentencePrioPercentage += sentencePrio.priorityPercentage
+                totalSentencePrioPercentage += sentencePrio.priority
             } catch (err: NoSuchElementException) {
                 logger.error("BatchServiceConfig not in sync with reference sentences in db./n${err.message}", err)
             }
