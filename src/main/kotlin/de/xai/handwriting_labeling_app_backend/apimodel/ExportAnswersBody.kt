@@ -20,5 +20,6 @@ data class ExportAnswerInfoBody(
     val sampleId: Long,
     val referenceSentenceId: Long,
     val questionId: Long,
-    val score: Int
+    val score: Int,
+    val submissionTimestamp: String
 )

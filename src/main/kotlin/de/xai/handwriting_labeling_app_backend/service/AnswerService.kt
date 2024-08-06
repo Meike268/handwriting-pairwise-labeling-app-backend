@@ -9,6 +9,7 @@ import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SEN
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
 import de.xai.handwriting_labeling_app_backend.utils.safeLet
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class AnswerService(
@@ -24,7 +25,8 @@ class AnswerService(
                 user = userRepository.findByUsername(username)!!,
                 sampleId = sampleId,
                 question = questionRepository.findById(questionId).get(),
-                score = score
+                score = score,
+                submissionTimestamp = LocalDateTime.now()
             )
         )
     }
@@ -45,15 +47,17 @@ class AnswerService(
                 answer.user?.id,
                 answer.sampleId,
                 answer.question?.id,
-                answer.score
-            ) { userId, sampleId, questionId, score ->
+                answer.score,
+                answer.submissionTimestamp
+            ) { userId, sampleId, questionId, score, time ->
 
                 ExportAnswerInfoBody(
                     userId = userId,
                     sampleId = sampleId,
                     referenceSentenceId = referenceSentenceId,
                     questionId = questionId,
-                    score = score
+                    score = score,
+                    submissionTimestamp = time.toString()
                 )
             }
                 ?: throw IllegalStateException("Problem constructing ${ExportAnswerInfoBody::class.java.name} from " +
