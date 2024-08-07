@@ -80,7 +80,7 @@ class BatchService(
     /**
      *
      * ## Explanation:
-     * We iterate combinations of question and reference sentence iteratively.
+     * We iterate combinations of question and reference sentence.
      * The order is determined by the priorities given in BatchServiceConfig.
      *
      * One after the other we try to assemble a batch of samples that refer to the given refSent and quest.
@@ -110,16 +110,23 @@ class BatchService(
         possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>
     ): TaskBatchInfoBody? {
+        // get questions and reference sentence that are stored in DB
+        val priorityToQuestionPairs = possiblePrioritizedQuestions.map { prioritizedQuestion ->
+            prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId).getOrElse {
+                throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
+            }
+        }
+        val priorityToSentencePAirs = possiblePrioritizedSentences.map { prioritizedSentence ->
+            prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId).getOrElse {
+                throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
+            }
+        }
+
         // shuffle before sort, to randomly pick between same priority
-        for (prioritizedQuestion in possiblePrioritizedQuestions.shuffled().sortedBy { it.priority }) {
-            for (prioritizedSentence in possiblePrioritizedSentences.shuffled().sortedBy { it.priority }) {
-                val question = questionRepository.findById(prioritizedQuestion.questionId).getOrElse {
-                    throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
-                }
-                val sentence =
-                    referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId).getOrElse {
-                        throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
-                    }
+        for (prioToQuestion in priorityToQuestionPairs.shuffled().sortedBy { it.first.priority }) {
+            for (prioToSentence in priorityToSentencePAirs.shuffled().sortedBy { it.first.priority }) {
+                val question = prioToQuestion.second
+                val sentence = prioToSentence.second
 
                 if (question !in sentence.applicableQuestions!!) {
                     // question not applicable to sentence, continue with next sentence

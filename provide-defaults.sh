@@ -28,7 +28,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
    \"prioritizedReferenceSentences\": [
      {
        \"referenceSentencesId\": 1,
-       \"priorityPercentage\": 40
+       \"priority\": 1
      }
    ],
    \"prioritizedQuestions\": [
