@@ -6,14 +6,12 @@ import de.xai.handwriting_labeling_app_backend.repository.SampleRepository
 
 data class SampleInfoBody(
     val id: Long,
-    val studentId: Long,
     val resourceUrl: String
 ) {
     companion object {
         fun fromSample(sample: Sample): SampleInfoBody {
             return SampleInfoBody(
                 id = sample.id,
-                studentId = sample.studentId,
                 resourceUrl = SampleRepository.getResourceUrl(sample)
             )
         }

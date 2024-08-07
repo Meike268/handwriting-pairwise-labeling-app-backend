@@ -5,7 +5,6 @@ import java.io.File
 
 data class Sample(
     val id: Long,
-    val studentId: Long,
     val referenceSentence: ReferenceSentence?
 ) {
     fun getResourceFile(): File {
