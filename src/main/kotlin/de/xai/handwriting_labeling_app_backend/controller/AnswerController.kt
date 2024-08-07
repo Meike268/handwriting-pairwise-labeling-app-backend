@@ -42,10 +42,12 @@ class AnswerController(
         ))
     }
 
-    @GetMapping("/xai_sentences")
-    fun getXAiAnswers(): ResponseEntity<ExportAnswersBody> {
+    @GetMapping
+    fun getAnswers(
+
+    ): ResponseEntity<ExportAnswersBody> {
         return ResponseEntity.ok(
-            answerService.getAnswersForXAiSentences()
+            answerService.getAnswers(true, true)
         )
     }
 }

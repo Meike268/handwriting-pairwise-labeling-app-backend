@@ -23,10 +23,12 @@ if [ ! -f "$CONFIG_FILE" ]; then
 "{
    \"samplesOrigin\": \"xai_sentences\",
    \"batchSize\": 10,
+   \"minExpertAnswerCount\": 1,
+   \"targetAnswerCount\": 3,
    \"prioritizedReferenceSentences\": [
      {
        \"referenceSentencesId\": 1,
-       \"priorityPercentage\": 40
+       \"priority\": 1
      }
    ],
    \"prioritizedQuestions\": [
