@@ -18,14 +18,14 @@ class AnswerService(
     private val referenceSentenceRepository: ReferenceSentenceRepository,
     private val sampleRepository: SampleRepository,
 ) {
-    fun createOrUpdate(username: String, sampleId: Long, questionId: Long, score: Int): Answer {
+    fun createOrUpdate(username: String, sampleId: Long, questionId: Long, score: Int, submissionTimestamp: LocalDateTime): Answer {
         return answerRepository.save(
             Answer(
                 user = userRepository.findByUsername(username)!!,
                 sampleId = sampleId,
                 question = questionRepository.findById(questionId).get(),
                 score = score,
-                submissionTimestamp = LocalDateTime.now()
+                submissionTimestamp = submissionTimestamp
             )
         )
     }

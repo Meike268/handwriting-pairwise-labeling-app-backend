@@ -8,6 +8,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.security.Principal
+import java.time.Instant
+import java.time.LocalDateTime
+import java.util.*
 
 @RestController
 @RequestMapping("/answers")
@@ -25,7 +28,8 @@ class AnswerController(
                 principal.name,
                 answer.sampleId,
                 answer.questionId,
-                answer.score
+                answer.score,
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(answer.submissionTimestamp), TimeZone.getDefault().toZoneId())
             )
         )
     }
@@ -38,7 +42,8 @@ class AnswerController(
             principal.name,
             answer.sampleId,
             answer.questionId,
-            answer.score
+            answer.score,
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(answer.submissionTimestamp), TimeZone.getDefault().toZoneId())
         ))
     }
 
