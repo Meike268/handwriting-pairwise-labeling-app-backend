@@ -42,13 +42,12 @@ class AnswerController(
         ))
     }
 
-    @GetMapping("/xai_sentences")
+    @GetMapping
     fun getAnswers(
-        @RequestParam("xai") includeXAi: Boolean,
-        @RequestParam("others") includeOthers: Boolean
+
     ): ResponseEntity<ExportAnswersBody> {
         return ResponseEntity.ok(
-            answerService.getAnswers(includeXAi, includeOthers)
+            answerService.getAnswers(true, true)
         )
     }
 }
