@@ -38,9 +38,38 @@ class Constants {
             get() = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
         val samplesUrl = "$baseUrl/files/images/samples"
 
-
+        /**
+         * Constant string used to communicate the state of the get batch response.
+         * "success" means, that a batch was successfully assembled for the user who requested the batch and the main
+         * body of the response contains the samples.
+         * */
         const val GET_BATCH_RESPONSE_STATE_SUCCESS = "success"
 
+        /**
+         * Constant string used to communicate the state of the get batch response.
+         * "finished" means, that there are no tasks left, that the user can give an answer to.
+         * The user has answered every task that the BatchServiceConfig specifies.
+         * The main body of the response is empty.
+         * */
         const val GET_BATCH_RESPONSE_STATE_FINISHED = "finished"
+
+        /**
+         * In the DB the role names are prefixed with this.
+         * */
+        const val ROLE_PREFIX = "ROLE_"
+
+        /**
+         * The role names for admin, expert and user. Used in roleNames field of the UserCreateBody.
+         * */
+        const val ROLE_NAME_ADMIN = "ADMIN"
+        const val ROLE_NAME_EXPERT = "EXPERT"
+        const val ROLE_NAME_USER = "USER"
+
+        /**
+         * The role names for admin, expert and user. Used in DB role table.
+         * */
+        val roleAdmin = "${ROLE_PREFIX}$ROLE_NAME_ADMIN"
+        val roleExpert = "${ROLE_PREFIX}$ROLE_NAME_EXPERT"
+        val roleUser = "${ROLE_PREFIX}$ROLE_NAME_USER"
     }
 }
