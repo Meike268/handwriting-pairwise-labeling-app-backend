@@ -63,17 +63,6 @@ class SampleRepository(
         return findAll().find { it.id == id }
     }
 
-    /**
-     * Returns a sample if the corresponding File exists or null if it doesn't.
-     */
-    fun findByIdAndStudentIdAndReferenceSentenceId(id: Long, referenceSentenceId: Long?): Sample? {
-        return try {
-            fromFile(getResourceFile(id, referenceSentenceId))
-        } catch (e: FileNotFoundException) {
-            null
-        }
-    }
-
     companion object {
         private fun path(id: Long, referenceSentenceId: Long?): String {
             return if (referenceSentenceId != null) {
