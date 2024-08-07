@@ -12,6 +12,7 @@ data class XAiExportAnswersMetaData(
     val questionIds: List<Long>,
     // reference sentence also holds applicableQuestions relationship
     val referenceSentences: List<ReferenceSentence>,
+    val userInfos: List<UserInfoBody>,
     val samplesDirectoryName: String,
     val samplesCount: Int,
 )

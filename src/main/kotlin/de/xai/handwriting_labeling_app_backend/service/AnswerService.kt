@@ -1,9 +1,6 @@
 package de.xai.handwriting_labeling_app_backend.service
 
-import de.xai.handwriting_labeling_app_backend.apimodel.ExportAnswersBody
-import de.xai.handwriting_labeling_app_backend.apimodel.OthersExportAnswersBody
-import de.xai.handwriting_labeling_app_backend.apimodel.XAiExportAnswerInfoBody
-import de.xai.handwriting_labeling_app_backend.apimodel.XAiExportAnswersMetaData
+import de.xai.handwriting_labeling_app_backend.apimodel.*
 import de.xai.handwriting_labeling_app_backend.model.Answer
 import de.xai.handwriting_labeling_app_backend.repository.*
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
@@ -90,10 +87,12 @@ class AnswerService(
     ): XAiExportAnswersMetaData {
         val questionIds = questionRepository.findAll().mapNotNull { it.id }
         val referenceSentences = referenceSentenceRepository.findAll()
+        val userInfos = userRepository.findAll().mapNotNull { UserInfoBody.fromUser(it) }
 
         return XAiExportAnswersMetaData(
             questionIds = questionIds,
             referenceSentences = referenceSentences,
+            userInfos = userInfos,
             samplesDirectoryName = XAI_SENTENCE_DIRECTORY_NAME,
             samplesCount = xaiAnswerInfos.size
         )
