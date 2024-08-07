@@ -37,8 +37,6 @@ class SampleRepository(
         }
 
         val sampleId = file.name.replace(".png", "").toLong()
-        println(file)
-        println(file.parentFile.name)
         return if (file.parentFile.parentFile == xaiSentencesDirectory)
             Sample(sampleId, referenceSentenceRepository.findById(file.parentFile.name.toLong()).get())
         else
