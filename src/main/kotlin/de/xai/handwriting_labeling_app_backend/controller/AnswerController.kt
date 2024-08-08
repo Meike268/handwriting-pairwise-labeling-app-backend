@@ -49,10 +49,14 @@ class AnswerController(
 
     @GetMapping
     fun getAnswers(
+        @RequestParam(name = "xai")
+        xai: Boolean = false ,
+        @RequestParam(name = "others")
+        others: Boolean = false
 
     ): ResponseEntity<ExportAnswersBody> {
         return ResponseEntity.ok(
-            answerService.getAnswers(true, true)
+            answerService.getAnswers(xai, others)
         )
     }
 }

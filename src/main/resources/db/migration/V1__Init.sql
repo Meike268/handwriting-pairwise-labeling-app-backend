@@ -88,9 +88,11 @@ CREATE TABLE `answer` (
 );
 
 CREATE TABLE `report` (
-    `report_id` bigint NOT NULL,
+    `id` bigint NOT NULL AUTO_INCREMENT,
     `user_id`  bigint NOT NULL,
-    `sample_id`  bigint NOT NULL,
+    `sample_id`  bigint,
+    `question_id` bigint,
     `message`  bigint NOT NULL,
-    `submission_timestamp` timestamp NOT NULL
+    `submission_timestamp` timestamp NOT NULL,
+    PRIMARY KEY (`id`)
 )
