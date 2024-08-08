@@ -1,6 +1,7 @@
 package de.xai.handwriting_labeling_app_backend.repository
 
 import de.xai.handwriting_labeling_app_backend.model.Sample
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.OTHERS_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesDirectory
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesUrl
@@ -68,7 +69,7 @@ class SampleRepository(
             return if (referenceSentenceId != null) {
                 "/$XAI_SENTENCE_DIRECTORY_NAME/${referenceSentenceId}/${id}.png"
             } else {
-                "$samplesUrl/others/${id}.png"
+                "$samplesUrl/$OTHERS_DIRECTORY_NAME/${id}.png"
             }
         }
 
