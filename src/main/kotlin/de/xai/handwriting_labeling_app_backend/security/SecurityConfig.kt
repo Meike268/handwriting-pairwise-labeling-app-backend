@@ -28,11 +28,14 @@ class SecurityConfig (val env: Environment) {
                 authorize(HttpMethod.POST, "/addOne", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/users/login", authenticated)
 
-                authorize(HttpMethod.GET, "/batch", hasRole("USER"))
+                authorize(HttpMethod.GET, "/batch", authenticated)
 
                 authorize(HttpMethod.GET, "/answers", hasRole("ADMIN"))
-                authorize(HttpMethod.POST, "/answers", hasRole("USER"))
-                authorize(HttpMethod.PUT, "/answers", hasRole("USER"))
+                authorize(HttpMethod.POST, "/answers", authenticated)
+                authorize(HttpMethod.PUT, "/answers", authenticated)
+
+                authorize(HttpMethod.GET, "/reports", hasRole("ADMIN"))
+                authorize(HttpMethod.POST, "/reports", authenticated)
 
                 authorize(HttpMethod.GET, "/config", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/config", hasRole("ADMIN"))

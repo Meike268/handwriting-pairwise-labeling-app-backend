@@ -86,3 +86,13 @@ CREATE TABLE `answer` (
     FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
     FOREIGN KEY (`question_id`) REFERENCES `question` (`id`)
 );
+
+CREATE TABLE `report` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `user_id`  bigint NOT NULL,
+    `sample_id`  bigint,
+    `question_id` bigint,
+    `message`  bigint NOT NULL,
+    `submission_timestamp` timestamp NOT NULL,
+    PRIMARY KEY (`id`)
+)
