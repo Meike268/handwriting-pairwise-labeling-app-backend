@@ -1,8 +1,13 @@
 package de.xai.handwriting_labeling_app_backend.service
 
-import de.xai.handwriting_labeling_app_backend.apimodel.*
+import de.xai.handwriting_labeling_app_backend.apimodel.GetBatchResponseBody
+import de.xai.handwriting_labeling_app_backend.apimodel.ReferenceSentenceInfoBody
+import de.xai.handwriting_labeling_app_backend.apimodel.SampleInfoBody
+import de.xai.handwriting_labeling_app_backend.apimodel.TaskBatchInfoBody
 import de.xai.handwriting_labeling_app_backend.component.BatchConfigHandler
-import de.xai.handwriting_labeling_app_backend.model.*
+import de.xai.handwriting_labeling_app_backend.model.PrioritizedQuestion
+import de.xai.handwriting_labeling_app_backend.model.PrioritizedReferenceSentence
+import de.xai.handwriting_labeling_app_backend.model.Sample
 import de.xai.handwriting_labeling_app_backend.repository.*
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_FINISHED
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_SUCCESS
@@ -22,8 +27,8 @@ class BatchService(
     private val questionRepository: QuestionRepository,
     private val userRepository: UserRepository,
     private val sampleRepository: SampleRepository,
+    private val exampleRepository: ExampleRepository,
     private val referenceSentenceRepository: ReferenceSentenceRepository,
-    private val examplePairRepository: ExamplePairRepository,
     private val answerRepository: AnswerRepository,
     private val configHandler: BatchConfigHandler
 ) {
@@ -117,9 +122,10 @@ class BatchService(
             }
         }
         val priorityToSentencePAirs = possiblePrioritizedSentences.map { prioritizedSentence ->
-            prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId).getOrElse {
-                throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
-            }
+            prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId)
+                .getOrElse {
+                    throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
+                }
         }
 
         // shuffle before sort, to randomly pick between same priority
@@ -169,12 +175,12 @@ class BatchService(
 
                     if (samplesToMakeBatchFrom.isNotEmpty()) {
                         val batchSamples = samplesToMakeBatchFrom.shuffled().take(batchSize)
-                        val examplePair =
-                            examplePairRepository.findByReferenceSentenceAndQuestion(sentence, question)
+                        val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
+                            ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
                         return TaskBatchInfoBody(
                             question = question,
+                            example = example,
                             referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
-                            examplePair = ExamplePairInfoBody.fromExamplePair(examplePair!!),
                             samples = batchSamples.map { SampleInfoBody.fromSample(it) })
                     }
                 }

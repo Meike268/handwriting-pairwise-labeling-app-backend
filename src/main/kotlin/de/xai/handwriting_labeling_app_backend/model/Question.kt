@@ -10,5 +10,8 @@ class Question(
     var id: Long? = null,
 
     @Column(name = "description")
-    var description: String? = null
+    var description: String? = null,
+
+    @Column(name = "example_image_name")
+    var exampleImageName: String? = null,
 )
