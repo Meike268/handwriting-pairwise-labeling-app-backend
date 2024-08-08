@@ -7,6 +7,5 @@ RUN ./mvnw clean install -Pskip-tests
 
 FROM eclipse-temurin:21.0.2_13-jre-jammy AS final
 WORKDIR /usr/handwriting-labeling-app
-COPY src/main/resources src/main/resources
 COPY --from=builder ./target/*.jar *.jar
 ENTRYPOINT ["java", "-jar", "./*.jar"]
