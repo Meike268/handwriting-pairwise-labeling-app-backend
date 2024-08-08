@@ -35,14 +35,15 @@ CREATE TABLE `question`
 (
     `id`             bigint    NOT NULL AUTO_INCREMENT,
     `description`    text      NOT NULL,
+    `example_image_name` text NOT NULL,
     PRIMARY KEY (`id`)
 );
-INSERT INTO `question`(`id`, `description`)
-VALUES (1, 'overall-legibility'),
-       (2, 'letter-alignment'),
-       (3, 'letter-size_rnh'),
-       (4, 'letter-size_ad'),
-       (5, 'letter-size_el');
+INSERT INTO `question`(`id`, `description`, `example_image_name`)
+VALUES (1, 'overall-legibility', 'example_image_overall_legibility.png'),
+       (2, 'letter-alignment', 'example_image_letter_alignment.png'),
+       (3, 'letter-size_rnh', 'example_image_letter_size_rnh.png'),
+       (4, 'letter-size_ad', 'example_image_letter_size_ad.png'),
+       (5, 'letter-size_el', 'no-example-image-given');
 
 CREATE TABLE `reference_sentence`
 (
@@ -76,69 +77,6 @@ VALUES (1, 1), (2, 1), (3, 1),(4, 1),(5, 1),(6, 1),(7, 1),(8, 1),(9, 1),(10, 1),
        (1, 3),(2, 3),(3, 3),(4, 3),(5, 3),(6, 3),(7, 3),(8, 3),(9, 3),(10, 3),
        (1, 4),(2, 4),(5, 4),(6, 4),(7, 4),(8, 4),
        (2, 5),(3, 5),(4, 5),(6, 5),(8, 5),(9, 5),(10, 5);
-
-CREATE TABLE `example_pair`
-(
-    `positive_example_image_path`    text    NOT NULL,
-    `negative_example_image_path`    text    NOT NULL,
-    `reference_sentence_id`  bigint  NOT NULL,
-    `question_id`            bigint  NOT NULL,
-    PRIMARY KEY (`reference_sentence_id`, `question_id`),
-    FOREIGN KEY (`reference_sentence_id`) REFERENCES `reference_sentence` (`id`),
-    FOREIGN KEY (`question_id`) REFERENCES `question` (`id`)
-);
-INSERT INTO `example_pair`
-(`positive_example_image_path`, `negative_example_image_path`, question_id, `reference_sentence_id`)
-VALUES ('1_positive.png', '1_negative.png', 1, 1),
-       ('1_positive.png', '1_negative.png', 1, 2),
-       ('1_positive.png', '1_negative.png', 1, 3),
-       ('1_positive.png', '1_negative.png', 1, 4),
-       ('1_positive.png', '1_negative.png', 1, 5),
-       ('1_positive.png', '1_negative.png', 1, 6),
-       ('1_positive.png', '1_negative.png', 1, 7),
-       ('1_positive.png', '1_negative.png', 1, 8),
-       ('1_positive.png', '1_negative.png', 1, 9),
-       ('1_positive.png', '1_negative.png', 1, 10),
-       ('1_positive.png', '1_negative.png', 2, 1),
-       ('1_positive.png', '1_negative.png', 2, 2),
-       ('1_positive.png', '1_negative.png', 2, 3),
-       ('1_positive.png', '1_negative.png', 2, 4),
-       ('1_positive.png', '1_negative.png', 2, 5),
-       ('1_positive.png', '1_negative.png', 2, 6),
-       ('1_positive.png', '1_negative.png', 2, 7),
-       ('1_positive.png', '1_negative.png', 2, 8),
-       ('1_positive.png', '1_negative.png', 2, 9),
-       ('1_positive.png', '1_negative.png', 2, 10),
-       ('1_positive.png', '1_negative.png', 3, 1),
-       ('1_positive.png', '1_negative.png', 3, 2),
-       ('1_positive.png', '1_negative.png', 3, 3),
-       ('1_positive.png', '1_negative.png', 3, 4),
-       ('1_positive.png', '1_negative.png', 3, 5),
-       ('1_positive.png', '1_negative.png', 3, 6),
-       ('1_positive.png', '1_negative.png', 3, 7),
-       ('1_positive.png', '1_negative.png', 3, 8),
-       ('1_positive.png', '1_negative.png', 3, 9),
-       ('1_positive.png', '1_negative.png', 3, 10),
-       ('1_positive.png', '1_negative.png', 4, 1),
-       ('1_positive.png', '1_negative.png', 4, 2),
-       ('1_positive.png', '1_negative.png', 4, 3),
-       ('1_positive.png', '1_negative.png', 4, 4),
-       ('1_positive.png', '1_negative.png', 4, 5),
-       ('1_positive.png', '1_negative.png', 4, 6),
-       ('1_positive.png', '1_negative.png', 4, 7),
-       ('1_positive.png', '1_negative.png', 4, 8),
-       ('1_positive.png', '1_negative.png', 4, 9),
-       ('1_positive.png', '1_negative.png', 4, 10),
-       ('1_positive.png', '1_negative.png', 5, 1),
-       ('1_positive.png', '1_negative.png', 5, 2),
-       ('1_positive.png', '1_negative.png', 5, 3),
-       ('1_positive.png', '1_negative.png', 5, 4),
-       ('1_positive.png', '1_negative.png', 5, 5),
-       ('1_positive.png', '1_negative.png', 5, 6),
-       ('1_positive.png', '1_negative.png', 5, 7),
-       ('1_positive.png', '1_negative.png', 5, 8),
-       ('1_positive.png', '1_negative.png', 5, 9),
-       ('1_positive.png', '1_negative.png', 5, 10);
 
 CREATE TABLE `answer` (
     `user_id` bigint NOT NULL,

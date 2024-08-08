@@ -26,10 +26,18 @@ class Constants {
         val othersDirectory = File("${samplesDirectory.path}/$OTHERS_DIRECTORY_NAME")
 
         /**
+         * path to the root directory where example images are stored.
+         * Under this root dir all example images are found.
+         */
+        const val EXAMPLE_DIR_PATH = "./src/main/resources/public/files/images/examples"
+        val examplesDirectory = File(EXAMPLE_DIR_PATH)
+
+        /**
          * path to the config json withing the project structure
          */
         const val BATCH_SERVICE_CONFIG_PATH = "./src/main/resources/batch_service_config.json"
         val batchServiceConfigFile = File(BATCH_SERVICE_CONFIG_PATH)
+
 
         /**
          * base url of backend. Defined in .env as APP_URL_ROOT and exposed to Spring in application.properties
@@ -37,6 +45,7 @@ class Constants {
         val baseUrl: String
             get() = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
         val samplesUrl = "$baseUrl/files/images/samples"
+        val examplesUrl = "$baseUrl/files/images/examples"
 
         /**
          * Constant string used to communicate the state of the get batch response.
