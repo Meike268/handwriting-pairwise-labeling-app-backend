@@ -2,6 +2,7 @@ package de.xai.handwriting_labeling_app_backend.model
 
 import jakarta.persistence.*
 import java.io.Serializable
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "answer")
@@ -23,6 +24,9 @@ class Answer(
 
     @Column(name = "score")
     var score: Int? = null,
+
+    @Column(name = "submission_timestamp")
+    val submissionTimestamp: LocalDateTime? = null,
 )
 
 data class AnswerId(

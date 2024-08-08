@@ -4,4 +4,5 @@ data class AnswerCreateBody(
     val sampleId: Long,
     val questionId: Long,
     val score: Int,
+    val submissionTimestamp: Long,
 )

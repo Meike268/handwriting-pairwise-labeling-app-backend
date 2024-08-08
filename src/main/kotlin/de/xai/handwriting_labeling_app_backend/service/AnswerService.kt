@@ -8,6 +8,7 @@ import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersD
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
 import de.xai.handwriting_labeling_app_backend.utils.safeLet
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class AnswerService(
@@ -17,13 +18,14 @@ class AnswerService(
     private val referenceSentenceRepository: ReferenceSentenceRepository,
     private val sampleRepository: SampleRepository,
 ) {
-    fun createOrUpdate(username: String, sampleId: Long, questionId: Long, score: Int): Answer {
+    fun createOrUpdate(username: String, sampleId: Long, questionId: Long, score: Int, submissionTimestamp: LocalDateTime): Answer {
         return answerRepository.save(
             Answer(
                 user = userRepository.findByUsername(username)!!,
                 sampleId = sampleId,
                 question = questionRepository.findById(questionId).get(),
-                score = score
+                score = score,
+                submissionTimestamp = submissionTimestamp
             )
         )
     }
@@ -61,26 +63,26 @@ class AnswerService(
             }?.referenceSentence?.id
         } ?: return@mapNotNull null //the sample this answer refers to is not in xai directory
 
-        safeLet(
-            answer.user?.id,
-            answer.sampleId,
-            answer.question?.id,
-            answer.score
-        ) { userId, sampleId, questionId, score ->
+            safeLet(
+                answer.user?.id,
+                answer.sampleId,
+                answer.question?.id,
+                answer.score,
+                answer.submissionTimestamp
+            ) { userId, sampleId, questionId, score, time ->
 
-            XAiExportAnswerInfoBody(
-                userId = userId,
-                sampleId = sampleId,
-                referenceSentenceId = referenceSentenceId,
-                questionId = questionId,
-                score = score
-            )
+                XAiExportAnswerInfoBody(
+                    userId = userId,
+                    sampleId = sampleId,
+                    referenceSentenceId = referenceSentenceId,
+                    questionId = questionId,
+                    score = score,
+                    submissionTimestamp = time.toString()
+                )
+            }
+                ?: throw IllegalStateException("Problem constructing ${XAiExportAnswerInfoBody::class.java.name} from " +
+                        "answers in DB.\n Answer: $answer")
         }
-            ?: throw IllegalStateException(
-                "Problem constructing ${XAiExportAnswerInfoBody::class.java.name} from " +
-                        "answers in DB.\n Answer: $answer"
-            )
-    }
 
     private fun retrieveXaiMetaData(
         xaiAnswerInfos: List<XAiExportAnswerInfoBody>
