@@ -6,9 +6,8 @@ CREATE TABLE `user`
     PRIMARY KEY (`id`)
 );
 INSERT INTO `user`
-VALUES (1, 'admin', '$2a$12$/ROqUVGeB02S6s6/UoDHGum6wsRaNLjxrwsKVr6EttysAGXXYtB7.'),
-       (2, 'user', '$2a$12$Fcuwcf6c96qMRn/kgmnBKunye.DSR3gk74NucVEUu0DpJRR6g6rt6'),
-       (3, 'expert', '$2a$12$xuAaet2fbf51Neucdh0HseTf4IGLOGJhxR.qAQ413uCTQFVSPg44W');
+VALUES (1, 'admin', '$2a$12$sLfWzlAxlno0VydU5xD4ZuOyWoqn/RbdlM0aRoZtabAgxisGn1fly'),
+       (2, 'testuser', '$2a$12$z27DG7CIIUZEAaasLap1Ge9qiK9YOWUa168UHSrgNr.sHm4TXUx.W');
 
 CREATE TABLE `role`
 (
@@ -29,7 +28,7 @@ CREATE TABLE `user_role`
     FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
 );
 INSERT INTO `user_role`(`user_id`, `role_id`)
-VALUES (1, 1), (1, 2), (2, 2), (3, 2), (3, 3);
+VALUES (1, 1), (1, 2), (2, 2);
 
 CREATE TABLE `question`
 (
