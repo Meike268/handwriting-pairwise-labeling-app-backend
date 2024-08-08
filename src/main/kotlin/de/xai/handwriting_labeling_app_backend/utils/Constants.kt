@@ -1,6 +1,5 @@
 package de.xai.handwriting_labeling_app_backend.utils
 
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.io.File
 
 class Constants {
@@ -9,7 +8,7 @@ class Constants {
          * path to the root directory where sample images are stored.
          * Under this root dir, there are sub dirs for different kinds of samples.
          */
-        const val SAMPLES_DIR_PATH = "./src/main/resources/public/files/images/samples"
+        private const val SAMPLES_DIR_PATH = "./src/main/resources/public/files/images/samples"
         val samplesDirectory = File(SAMPLES_DIR_PATH)
 
         /**
@@ -29,23 +28,21 @@ class Constants {
          * path to the root directory where example images are stored.
          * Under this root dir all example images are found.
          */
-        const val EXAMPLE_DIR_PATH = "./src/main/resources/public/files/images/examples"
+        private const val EXAMPLE_DIR_PATH = "./src/main/resources/public/files/images/examples"
         val examplesDirectory = File(EXAMPLE_DIR_PATH)
 
         /**
          * path to the config json withing the project structure
          */
-        const val BATCH_SERVICE_CONFIG_PATH = "./src/main/resources/batch_service_config.json"
+        private const val BATCH_SERVICE_CONFIG_PATH = "./src/main/resources/batch_service_config.json"
         val batchServiceConfigFile = File(BATCH_SERVICE_CONFIG_PATH)
 
 
         /**
          * base url of backend. Defined in .env as APP_URL_ROOT and exposed to Spring in application.properties
          * */
-        val baseUrl: String
-            get() = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
-        val samplesUrl = "$baseUrl/files/images/samples"
-        val examplesUrl = "$baseUrl/files/images/examples"
+        const val SAMPLES_PATH = "/files/images/samples"
+        const val EXAMPLES_PATH = "/files/images/examples"
 
         /**
          * Constant string used to communicate the state of the get batch response.
@@ -70,15 +67,15 @@ class Constants {
         /**
          * The role names for admin, expert and user. Used in roleNames field of the UserCreateBody.
          * */
-        const val ROLE_NAME_ADMIN = "ADMIN"
-        const val ROLE_NAME_EXPERT = "EXPERT"
-        const val ROLE_NAME_USER = "USER"
+        private const val ROLE_NAME_ADMIN = "ADMIN"
+        private const val ROLE_NAME_EXPERT = "EXPERT"
+        private const val ROLE_NAME_USER = "USER"
 
         /**
          * The role names for admin, expert and user. Used in DB role table.
          * */
-        val roleAdmin = "${ROLE_PREFIX}$ROLE_NAME_ADMIN"
-        val roleExpert = "${ROLE_PREFIX}$ROLE_NAME_EXPERT"
-        val roleUser = "${ROLE_PREFIX}$ROLE_NAME_USER"
+        const val ROLE_ADMIN = "${ROLE_PREFIX}$ROLE_NAME_ADMIN"
+        const val ROLE_EXPERT = "${ROLE_PREFIX}$ROLE_NAME_EXPERT"
+        const val ROLE_USER = "${ROLE_PREFIX}$ROLE_NAME_USER"
     }
 }

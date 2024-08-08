@@ -14,8 +14,8 @@ import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BAT
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.OTHERS_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectory
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.roleExpert
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.roleUser
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.ROLE_EXPERT
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.ROLE_USER
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -48,14 +48,14 @@ class BatchService(
         }
 
         val userRoles = user.roles.mapNotNull { it.name }
-        val taskBatchBodyForExpert = if (roleExpert in userRoles) {
+        val taskBatchBodyForExpert = if (ROLE_EXPERT in userRoles) {
             // user is expert -> first try to generate a batch of samples where expert answer is missing
             findBatch(
                 targetAnswerCount = config.targetAnswerCount,
                 batchSize = config.batchSize,
                 samplesDirectory = samplesDirectory,
                 userId = user.id!!,
-                userRole = roleExpert,
+                userRole = ROLE_EXPERT,
                 possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
                 possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList()
             )
@@ -67,7 +67,7 @@ class BatchService(
                 batchSize = config.batchSize,
                 samplesDirectory = samplesDirectory,
                 userId = user.id!!,
-                userRole = roleUser,
+                userRole = ROLE_USER,
                 possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
                 possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList()
             )

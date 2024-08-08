@@ -4,7 +4,7 @@ import de.xai.handwriting_labeling_app_backend.model.Sample
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.OTHERS_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesDirectory
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.samplesUrl
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.SAMPLES_PATH
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
 import org.springframework.stereotype.Repository
 import java.io.File
@@ -69,19 +69,19 @@ class SampleRepository(
             return if (referenceSentenceId != null) {
                 "/$XAI_SENTENCE_DIRECTORY_NAME/${referenceSentenceId}/${id}.png"
             } else {
-                "$samplesUrl/$OTHERS_DIRECTORY_NAME/${id}.png"
+                "$SAMPLES_PATH/$OTHERS_DIRECTORY_NAME/${id}.png"
             }
         }
 
-        fun getResourceUrl(id: Long, referenceSentenceId: Long?): String {
-            return "$samplesUrl${path(id, referenceSentenceId)}"
+        private fun getResourceUrl(id: Long, referenceSentenceId: Long?): String {
+            return "$SAMPLES_PATH${path(id, referenceSentenceId)}"
         }
 
         fun getResourceUrl(sample: Sample): String {
             return getResourceUrl(sample.id, sample.referenceSentence?.id)
         }
 
-        fun getResourceFile(id: Long, referenceSentenceId: Long?): File {
+        private fun getResourceFile(id: Long, referenceSentenceId: Long?): File {
             return File("$samplesDirectory${path(id, referenceSentenceId)}")
         }
 
