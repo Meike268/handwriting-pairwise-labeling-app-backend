@@ -112,6 +112,7 @@ class BatchService(
         possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>
     ): TaskBatchInfoBody? {
+        val startTime = System.currentTimeMillis()
         // get questions and reference sentence that are stored in DB
         val priorityToQuestionPairs = possiblePrioritizedQuestions.map { prioritizedQuestion ->
             prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId).getOrElse {
@@ -203,6 +204,8 @@ class BatchService(
         }
         // now we iterated all feasible combinations of question and sentence and counted pending answers for this user
         firstFoundBatchForUser?.userAnswerCounts?.pendingAnswersCount = pendingAnswersCount
+
+        logger.info("Batch generation for user with id ${userId} took ${System.currentTimeMillis() - startTime} ms")
         return firstFoundBatchForUser
     }
 
