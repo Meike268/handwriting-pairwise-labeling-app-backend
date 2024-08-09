@@ -125,6 +125,7 @@ class BatchService(
                     throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
                 }
         }
+        val allSamples = sampleRepository.findAllInDirectoryRecursive(samplesDirectory)
 
         val submittedAnswersCount = answerRepository.findByUserId(userId).size
         var pendingAnswersCount = 0
@@ -143,9 +144,11 @@ class BatchService(
                 }
 
                 // all samples that correspond to the selected reference sentence
-                val refSentSamples = sampleRepository.findAllInDirectoryRecursive(samplesDirectory).filter { sample ->
+                //val refSentSamples = sampleRepository.findAllInDirectoryRecursive(xaiSingleSentenceDirectory(sentence.id!!))
+                val refSentSamples = allSamples.filter { sample ->
                     sentence.id == sample.referenceSentence?.id
                 }
+
                 // all samples that correspond to the selected sentence, that the user has not answered the question yet
                 val refSentSamplesNotAnsweredByUser = refSentSamples.filter { sample ->
                     !sampleHasQuestionAnswerByUser(sample, userId, question.id!!)
