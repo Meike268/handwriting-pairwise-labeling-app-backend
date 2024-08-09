@@ -89,6 +89,7 @@ class BatchService(
      *      Thereby we check:
      *      - is the question applicable to the reference sentence?
      *      - are there samples for which the user has not posted an answer yet?
+     *          -> track count of
      *      - do the samples not already have enough (targetAnswerCount) answers from users with the given role?
      *      If there are samples that comply, then a batch is assembled randomly from them.
      *      If not, then the loop continues with the next combination of quest and refSent
@@ -154,15 +155,7 @@ class BatchService(
                     !sampleHasQuestionAnswerByUser(sample, userId, question.id!!)
                 }
                 if (refSentSamplesNotAnsweredByUser.isEmpty()) {
-                    // the user answered all samples for this sentence and question
-                    continue
-                }
-
-                pendingAnswersCount += refSentSamplesNotAnsweredByUser.size
-
-                if (firstFoundBatchForUser != null) {
-                    // the batch for the user is already found. We only iterate the questions and sentences further to
-                    // count pending answers of the user
+                    // the user answered all samples for this sentence and question, none pending
                     continue
                 }
 
@@ -177,6 +170,14 @@ class BatchService(
                         userRole in rolesOfAnswerer
                     }
                     sample to answerToSampleAndQuestionWithRole.size
+                }
+
+                // count pending answers for user in this combination of question and sentence
+                pendingAnswersCount += samplesToAnswerCount.filter { pair -> pair.second < targetAnswerCount }.size
+                if (firstFoundBatchForUser != null) {
+                    // the batch for the user is already found. We only iterate the questions and sentences further to
+                    // count pending answers of the user
+                    continue
                 }
 
                 // start by collecting at least one answer per sample. If all samples have one answer, then collect answers
