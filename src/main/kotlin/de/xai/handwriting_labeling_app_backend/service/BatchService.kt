@@ -1,9 +1,6 @@
 package de.xai.handwriting_labeling_app_backend.service
 
-import de.xai.handwriting_labeling_app_backend.apimodel.GetBatchResponseBody
-import de.xai.handwriting_labeling_app_backend.apimodel.ReferenceSentenceInfoBody
-import de.xai.handwriting_labeling_app_backend.apimodel.SampleInfoBody
-import de.xai.handwriting_labeling_app_backend.apimodel.TaskBatchInfoBody
+import de.xai.handwriting_labeling_app_backend.apimodel.*
 import de.xai.handwriting_labeling_app_backend.component.BatchConfigHandler
 import de.xai.handwriting_labeling_app_backend.model.PrioritizedQuestion
 import de.xai.handwriting_labeling_app_backend.model.PrioritizedReferenceSentence
@@ -121,16 +118,21 @@ class BatchService(
                 throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
             }
         }
-        val priorityToSentencePAirs = possiblePrioritizedSentences.map { prioritizedSentence ->
+        val priorityToSentencePairs = possiblePrioritizedSentences.map { prioritizedSentence ->
             prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId)
                 .getOrElse {
                     throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
                 }
         }
 
+        val submittedAnswersCount = answerRepository.findByUserId(userId).size
+        var pendingAnswersCount = 0
+
+        var firstFoundBatchForUser: TaskBatchInfoBody? = null
+
         // shuffle before sort, to randomly pick between same priority
         for (prioToQuestion in priorityToQuestionPairs.shuffled().sortedBy { it.first.priority }) {
-            for (prioToSentence in priorityToSentencePAirs.shuffled().sortedBy { it.first.priority }) {
+            for (prioToSentence in priorityToSentencePairs.shuffled().sortedBy { it.first.priority }) {
                 val question = prioToQuestion.second
                 val sentence = prioToSentence.second
 
@@ -149,6 +151,14 @@ class BatchService(
                 }
                 if (refSentSamplesNotAnsweredByUser.isEmpty()) {
                     // the user answered all samples for this sentence and question
+                    continue
+                }
+
+                pendingAnswersCount += refSentSamplesNotAnsweredByUser.size
+
+                if (firstFoundBatchForUser != null) {
+                    // the batch for the user is already found. We only iterate the questions and sentences further to
+                    // count pending answers of the user
                     continue
                 }
 
@@ -177,16 +187,23 @@ class BatchService(
                         val batchSamples = samplesToMakeBatchFrom.shuffled().take(batchSize)
                         val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
                             ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
-                        return TaskBatchInfoBody(
+                        firstFoundBatchForUser = TaskBatchInfoBody(
                             question = question,
                             example = example,
                             referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
-                            samples = batchSamples.map { SampleInfoBody.fromSample(it) })
+                            samples = batchSamples.map { SampleInfoBody.fromSample(it) },
+                            userAnswerCounts = GetUserAnswerCountsBody(
+                                submittedAnswersCount = submittedAnswersCount,
+                                pendingAnswersCount = null
+                            )
+                        )
                     }
                 }
             }
         }
-        return null
+        // now we iterated all feasible combinations of question and sentence and counted pending answers for this user
+        firstFoundBatchForUser?.userAnswerCounts?.pendingAnswersCount = pendingAnswersCount
+        return firstFoundBatchForUser
     }
 
     private fun sampleHasQuestionAnswerByUser(sample: Sample, userId: Long, questionId: Long): Boolean {
