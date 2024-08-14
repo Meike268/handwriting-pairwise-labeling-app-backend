@@ -8,5 +8,7 @@ interface AnswerRepository: JpaRepository<Answer, Long> {
 
     fun findAllByUserIdAndQuestionId(userId: Long, questionId: Long): List<Answer>
 
+    fun findAllByQuestionId(questionId: Long): List<Answer>
+
     fun findAllByQuestionIdAndSampleId(questionId: Long, sampleId: Long): List<Answer>
 }

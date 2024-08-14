@@ -2,6 +2,7 @@ package de.xai.handwriting_labeling_app_backend.service
 
 import de.xai.handwriting_labeling_app_backend.apimodel.*
 import de.xai.handwriting_labeling_app_backend.component.BatchConfigHandler
+import de.xai.handwriting_labeling_app_backend.model.Answer
 import de.xai.handwriting_labeling_app_backend.model.PrioritizedQuestion
 import de.xai.handwriting_labeling_app_backend.model.PrioritizedReferenceSentence
 import de.xai.handwriting_labeling_app_backend.model.Sample
@@ -115,17 +116,19 @@ class BatchService(
     ): TaskBatchInfoBody? {
         val startTime = System.currentTimeMillis()
         // get questions and reference sentence that are stored in DB
-        val priorityToQuestionPairs = possiblePrioritizedQuestions.map { prioritizedQuestion ->
+        val priorityToQuestionPairsSorted = possiblePrioritizedQuestions.map { prioritizedQuestion ->
             prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId).getOrElse {
                 throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
             }
-        }
-        val priorityToSentencePairs = possiblePrioritizedSentences.map { prioritizedSentence ->
+        }.shuffled().sortedBy { it.first.priority } // shuffle before sort, to randomly pick between same priority
+
+        val priorityToSentencePairsSorted = possiblePrioritizedSentences.map { prioritizedSentence ->
             prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId)
                 .getOrElse {
                     throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
                 }
-        }
+        }.shuffled().sortedBy { it.first.priority } // shuffle before sort, to randomly pick between same priority
+
         val allSamples = sampleRepository.findAllInDirectoryRecursive(samplesDirectory)
 
         val submittedAnswersCount = answerRepository.findByUserId(userId).size
@@ -133,9 +136,8 @@ class BatchService(
 
         var firstFoundBatchForUser: TaskBatchInfoBody? = null
 
-        // shuffle before sort, to randomly pick between same priority
-        for (prioToQuestion in priorityToQuestionPairs.shuffled().sortedBy { it.first.priority }) {
-            for (prioToSentence in priorityToSentencePairs.shuffled().sortedBy { it.first.priority }) {
+        for (prioToQuestion in priorityToQuestionPairsSorted) {
+            for (prioToSentence in priorityToSentencePairsSorted) {
                 val question = prioToQuestion.second
                 val sentence = prioToSentence.second
 
@@ -145,14 +147,14 @@ class BatchService(
                 }
 
                 // all samples that correspond to the selected reference sentence
-                //val refSentSamples = sampleRepository.findAllInDirectoryRecursive(xaiSingleSentenceDirectory(sentence.id!!))
                 val refSentSamples = allSamples.filter { sample ->
                     sentence.id == sample.referenceSentence?.id
                 }
 
                 // all samples that correspond to the selected sentence, that the user has not answered the question yet
+                val answersToQuestionByUser = answerRepository.findAllByUserIdAndQuestionId(userId, question.id!!)
                 val refSentSamplesNotAnsweredByUser = refSentSamples.filter { sample ->
-                    !sampleHasQuestionAnswerByUser(sample, userId, question.id!!)
+                    !sampleHasQuestionAnswerByUser(sample, answersToQuestionByUser)
                 }
                 if (refSentSamplesNotAnsweredByUser.isEmpty()) {
                     // the user answered all samples for this sentence and question, none pending
@@ -161,15 +163,15 @@ class BatchService(
 
                 val samples = refSentSamplesNotAnsweredByUser
 
+                val allAnswersToQuestion = answerRepository.findAllByQuestionId(question.id!!)
                 val samplesToAnswerCount = samples.map { sample ->
-                    val answerToSampleAndQuestion =
-                        answerRepository.findAllByQuestionIdAndSampleId(question.id!!, sample.id)
+                    val answersForSampleAndQuestion = allAnswersToQuestion.filter { answer -> answer.sampleId == sample.id }
                     // only count answers where the answerer has the same role as the user who is currently requesting a new batch
-                    val answerToSampleAndQuestionWithRole = answerToSampleAndQuestion.filter { answer ->
+                    val answersForSampleAndQuestionWithRole = answersForSampleAndQuestion.filter { answer ->
                         val rolesOfAnswerer = answer.user?.roles?.mapNotNull { it.name } ?: setOf()
                         userRole in rolesOfAnswerer
                     }
-                    sample to answerToSampleAndQuestionWithRole.size
+                    sample to answersForSampleAndQuestionWithRole.size
                 }
 
                 // count pending answers for user in this combination of question and sentence
@@ -213,8 +215,7 @@ class BatchService(
         return firstFoundBatchForUser
     }
 
-    private fun sampleHasQuestionAnswerByUser(sample: Sample, userId: Long, questionId: Long): Boolean {
-        val userAnswersForQuestion = answerRepository.findAllByUserIdAndQuestionId(userId, questionId)
+    private fun sampleHasQuestionAnswerByUser(sample: Sample, userAnswersForQuestion: List<Answer>): Boolean {
         for (answer in userAnswersForQuestion) {
             if (answer.sampleId == sample.id) {
                 return true
