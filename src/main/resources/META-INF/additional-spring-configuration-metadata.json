@@ -1,8 +1,8 @@
 {
   "properties": [
     {
-      "name": "app.url.root",
-      "type": "java.lang.String",
-      "description": "Root of the user-app. Mainly used for CORS-config."
+      "name": "app.url.roots",
+      "type": "java.util.List",
+      "description": "Comma separated list of possible roots of the user-app. Mainly used for CORS-config."
   }
 ] }
