@@ -30,9 +30,10 @@ class SecurityConfig (val env: Environment) {
 
                 authorize(HttpMethod.GET, "/batch", authenticated)
 
-                authorize(HttpMethod.GET, "/answers", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/answers", authenticated)
                 authorize(HttpMethod.PUT, "/answers", authenticated)
+                authorize(HttpMethod.GET, "/answers", hasRole("ADMIN"))
+                authorize(HttpMethod.DELETE, "/answers/ofsample/{id}", hasRole("ADMIN"))
 
                 authorize(HttpMethod.GET, "/reports", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/reports", authenticated)

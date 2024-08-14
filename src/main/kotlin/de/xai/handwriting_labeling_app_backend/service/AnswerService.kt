@@ -147,4 +147,22 @@ class AnswerService(
                 )
         }
     }
+
+
+    fun deleteAnswersOfSample(sampleId: Long): Boolean {
+        val answersToSample = answerRepository.findAllBySampleId(sampleId)
+        val answersToDeleteCount = answersToSample.size
+        logger.debug("Delete all ${answersToDeleteCount} answers that were give to sample with id: $sampleId.")
+        var deletedCount = 0
+        for (answer in answersToSample) {
+            try {
+                answerRepository.delete(answer)
+                deletedCount++
+            } catch (e: Exception) {
+                logger.debug("Exception occurred while deleting {}: {}", answer, e.message)
+            }
+        }
+        return answersToDeleteCount == deletedCount
+    }
+
 }
