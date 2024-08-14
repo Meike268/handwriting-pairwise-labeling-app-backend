@@ -1,10 +1,8 @@
 package de.xai.handwriting_labeling_app_backend.service
 
-import de.xai.handwriting_labeling_app_backend.apimodel.GetBatchResponseBody
-import de.xai.handwriting_labeling_app_backend.apimodel.ReferenceSentenceInfoBody
-import de.xai.handwriting_labeling_app_backend.apimodel.SampleInfoBody
-import de.xai.handwriting_labeling_app_backend.apimodel.TaskBatchInfoBody
+import de.xai.handwriting_labeling_app_backend.apimodel.*
 import de.xai.handwriting_labeling_app_backend.component.BatchConfigHandler
+import de.xai.handwriting_labeling_app_backend.model.Answer
 import de.xai.handwriting_labeling_app_backend.model.PrioritizedQuestion
 import de.xai.handwriting_labeling_app_backend.model.PrioritizedReferenceSentence
 import de.xai.handwriting_labeling_app_backend.model.Sample
@@ -92,6 +90,7 @@ class BatchService(
      *      Thereby we check:
      *      - is the question applicable to the reference sentence?
      *      - are there samples for which the user has not posted an answer yet?
+     *          -> track count of
      *      - do the samples not already have enough (targetAnswerCount) answers from users with the given role?
      *      If there are samples that comply, then a batch is assembled randomly from them.
      *      If not, then the loop continues with the next combination of quest and refSent
@@ -115,22 +114,30 @@ class BatchService(
         possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>
     ): TaskBatchInfoBody? {
+        val startTime = System.currentTimeMillis()
         // get questions and reference sentence that are stored in DB
-        val priorityToQuestionPairs = possiblePrioritizedQuestions.map { prioritizedQuestion ->
+        val priorityToQuestionPairsSorted = possiblePrioritizedQuestions.map { prioritizedQuestion ->
             prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId).getOrElse {
                 throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
             }
-        }
-        val priorityToSentencePAirs = possiblePrioritizedSentences.map { prioritizedSentence ->
+        }.shuffled().sortedBy { it.first.priority } // shuffle before sort, to randomly pick between same priority
+
+        val priorityToSentencePairsSorted = possiblePrioritizedSentences.map { prioritizedSentence ->
             prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId)
                 .getOrElse {
                     throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
                 }
-        }
+        }.shuffled().sortedBy { it.first.priority } // shuffle before sort, to randomly pick between same priority
 
-        // shuffle before sort, to randomly pick between same priority
-        for (prioToQuestion in priorityToQuestionPairs.shuffled().sortedBy { it.first.priority }) {
-            for (prioToSentence in priorityToSentencePAirs.shuffled().sortedBy { it.first.priority }) {
+        val allSamples = sampleRepository.findAllInDirectoryRecursive(samplesDirectory)
+
+        val submittedAnswersCount = answerRepository.findByUserId(userId).size
+        var pendingAnswersCount = 0
+
+        var firstFoundBatchForUser: TaskBatchInfoBody? = null
+
+        for (prioToQuestion in priorityToQuestionPairsSorted) {
+            for (prioToSentence in priorityToSentencePairsSorted) {
                 val question = prioToQuestion.second
                 val sentence = prioToSentence.second
 
@@ -140,29 +147,39 @@ class BatchService(
                 }
 
                 // all samples that correspond to the selected reference sentence
-                val refSentSamples = sampleRepository.findAllInDirectoryRecursive(samplesDirectory).filter { sample ->
+                val refSentSamples = allSamples.filter { sample ->
                     sentence.id == sample.referenceSentence?.id
                 }
+
                 // all samples that correspond to the selected sentence, that the user has not answered the question yet
+                val answersToQuestionByUser = answerRepository.findAllByUserIdAndQuestionId(userId, question.id!!)
                 val refSentSamplesNotAnsweredByUser = refSentSamples.filter { sample ->
-                    !sampleHasQuestionAnswerByUser(sample, userId, question.id!!)
+                    !sampleHasQuestionAnswerByUser(sample, answersToQuestionByUser)
                 }
                 if (refSentSamplesNotAnsweredByUser.isEmpty()) {
-                    // the user answered all samples for this sentence and question
+                    // the user answered all samples for this sentence and question, none pending
                     continue
                 }
 
                 val samples = refSentSamplesNotAnsweredByUser
 
+                val allAnswersToQuestion = answerRepository.findAllByQuestionId(question.id!!)
                 val samplesToAnswerCount = samples.map { sample ->
-                    val answerToSampleAndQuestion =
-                        answerRepository.findAllByQuestionIdAndSampleId(question.id!!, sample.id)
+                    val answersForSampleAndQuestion = allAnswersToQuestion.filter { answer -> answer.sampleId == sample.id }
                     // only count answers where the answerer has the same role as the user who is currently requesting a new batch
-                    val answerToSampleAndQuestionWithRole = answerToSampleAndQuestion.filter { answer ->
+                    val answersForSampleAndQuestionWithRole = answersForSampleAndQuestion.filter { answer ->
                         val rolesOfAnswerer = answer.user?.roles?.mapNotNull { it.name } ?: setOf()
                         userRole in rolesOfAnswerer
                     }
-                    sample to answerToSampleAndQuestionWithRole.size
+                    sample to answersForSampleAndQuestionWithRole.size
+                }
+
+                // count pending answers for user in this combination of question and sentence
+                pendingAnswersCount += samplesToAnswerCount.filter { pair -> pair.second < targetAnswerCount }.size
+                if (firstFoundBatchForUser != null) {
+                    // the batch for the user is already found. We only iterate the questions and sentences further to
+                    // count pending answers of the user
+                    continue
                 }
 
                 // start by collecting at least one answer per sample. If all samples have one answer, then collect answers
@@ -177,20 +194,28 @@ class BatchService(
                         val batchSamples = samplesToMakeBatchFrom.shuffled().take(batchSize)
                         val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
                             ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
-                        return TaskBatchInfoBody(
+                        firstFoundBatchForUser = TaskBatchInfoBody(
                             question = question,
                             example = example,
                             referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
-                            samples = batchSamples.map { SampleInfoBody.fromSample(it) })
+                            samples = batchSamples.map { SampleInfoBody.fromSample(it) },
+                            userAnswerCounts = GetUserAnswerCountsBody(
+                                submittedAnswersCount = submittedAnswersCount,
+                                pendingAnswersCount = null
+                            )
+                        )
                     }
                 }
             }
         }
-        return null
+        // now we iterated all feasible combinations of question and sentence and counted pending answers for this user
+        firstFoundBatchForUser?.userAnswerCounts?.pendingAnswersCount = pendingAnswersCount
+
+        logger.info("Batch generation for user with id ${userId} took ${System.currentTimeMillis() - startTime} ms")
+        return firstFoundBatchForUser
     }
 
-    private fun sampleHasQuestionAnswerByUser(sample: Sample, userId: Long, questionId: Long): Boolean {
-        val userAnswersForQuestion = answerRepository.findAllByUserIdAndQuestionId(userId, questionId)
+    private fun sampleHasQuestionAnswerByUser(sample: Sample, userAnswersForQuestion: List<Answer>): Boolean {
         for (answer in userAnswersForQuestion) {
             if (answer.sampleId == sample.id) {
                 return true
