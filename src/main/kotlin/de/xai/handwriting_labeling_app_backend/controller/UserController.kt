@@ -6,6 +6,7 @@ import de.xai.handwriting_labeling_app_backend.model.User
 import de.xai.handwriting_labeling_app_backend.repository.RoleRepository
 import de.xai.handwriting_labeling_app_backend.repository.UserRepository
 import org.springframework.http.ResponseEntity
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.web.bind.annotation.*
 import java.security.Principal
 
@@ -40,7 +41,7 @@ class UserController(
     fun postUser(@RequestBody userCreateBody: UserCreateBody): User {
         return userRepository.save(User(
             username = userCreateBody.username,
-            password = userCreateBody.password,
+            password = BCryptPasswordEncoder(12).encode(userCreateBody.password),
             roles = userCreateBody.roleNames.map { roleName ->
                 roleRepository.findByName("ROLE_${roleName}")
             }.toSet()
