@@ -3,8 +3,9 @@ package de.xai.handwriting_labeling_app_backend.controller
 import de.xai.handwriting_labeling_app_backend.apimodel.UserCreateBody
 import de.xai.handwriting_labeling_app_backend.apimodel.UserInfoBody
 import de.xai.handwriting_labeling_app_backend.model.User
-import de.xai.handwriting_labeling_app_backend.repository.RoleRepository
 import de.xai.handwriting_labeling_app_backend.repository.UserRepository
+import de.xai.handwriting_labeling_app_backend.service.UserService
+import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.security.Principal
@@ -13,8 +14,10 @@ import java.security.Principal
 @RequestMapping("/users")
 class UserController(
     private val userRepository: UserRepository,
-    private val roleRepository: RoleRepository
+    private val userService: UserService
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     @PostMapping("/login")
     fun login(principal: Principal): ResponseEntity<out UserInfoBody> {
         userRepository.findByUsername(principal.name)?.let { user ->
@@ -37,13 +40,16 @@ class UserController(
     }
 
     @PostMapping
-    fun postUser(@RequestBody userCreateBody: UserCreateBody): User {
-        return userRepository.save(User(
-            username = userCreateBody.username,
-            password = userCreateBody.password,
-            roles = userCreateBody.roleNames.map { roleName ->
-                roleRepository.findByName("ROLE_${roleName}")
-            }.toSet()
-        ))
+    fun postUser(@RequestBody userCreateBody: UserCreateBody): ResponseEntity<out User> {
+        logger.info("Create new user: $userCreateBody")
+        val savedUser = userService.createUserIfNotExist(userCreateBody)
+
+        if (savedUser != null) {
+            logger.debug("New user was successfully created: {}", savedUser)
+            return ResponseEntity.ok(savedUser)
+        } else {
+            logger.debug("Could not create new user. Maybe name already exists.")
+            return ResponseEntity.status(409).body(null)
+        }
     }
 }
