@@ -55,6 +55,7 @@ class AnswerController(
         others: Boolean = false
 
     ): ResponseEntity<ExportAnswersBody> {
+        logger.info("Exporting answers and metadata.")
         return ResponseEntity.ok(
             answerService.getAnswers(xai, others)
         )
