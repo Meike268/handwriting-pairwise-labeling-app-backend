@@ -43,7 +43,7 @@ class AnswerService(
         includeXaiSamplesInExport: Boolean,
         includeOthersSamplesInExport: Boolean
     ): ExportAnswersBody {
-        logger.info("Prepare export of answers. includeXAi = $includeXaiSamplesInExport, includeOthers = $includeOthersSamplesInExport")
+        logger.debug("Prepare export of answers. includeXai = $includeXaiSamplesInExport, includeOthers = $includeOthersSamplesInExport")
         val startTime = System.currentTimeMillis()
         var xaiMetaData: XAiExportAnswersMetaData? = null
         var xaiAnswerInfos: List<XAiExportAnswerInfoBody>? = null
@@ -58,7 +58,7 @@ class AnswerService(
             othersAnswerInfos = retrieveOthersAnswers()
         }
 
-        logger.info("Creating the answer export body took ${System.currentTimeMillis() - startTime} ms")
+        logger.debug("Creating the answer export body took ${System.currentTimeMillis() - startTime} ms")
         return ExportAnswersBody(
             xaiMetaData = xaiMetaData,
             xaiAnswers = xaiAnswerInfos,
