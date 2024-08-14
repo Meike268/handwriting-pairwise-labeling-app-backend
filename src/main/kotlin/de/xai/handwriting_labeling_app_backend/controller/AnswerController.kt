@@ -60,4 +60,19 @@ class AnswerController(
             answerService.getAnswers(xai, others)
         )
     }
+
+    @DeleteMapping("/ofsample/{id}")
+    fun deleteAnswersOfSample(@PathVariable id: Long): ResponseEntity<String> {
+        logger.info("Deleting answers to sample with: $id")
+
+        val deletedAllSuccessfully = answerService.deleteAnswersOfSample(id)
+
+        if (deletedAllSuccessfully) {
+            logger.debug("Successfully deleted all answers")
+            return ResponseEntity.ok("Successfully deleted all answers")
+        } else {
+            logger.debug("Could not delete all answers that were found for sample with id: $id")
+            return ResponseEntity.ok("Did not delete all answers")
+        }
+    }
 }
