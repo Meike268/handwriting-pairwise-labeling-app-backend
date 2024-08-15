@@ -65,7 +65,7 @@ class BatchService(
         // if no batch for expert answers was assembled, then create batch where user(=any) answer is missing
         val taskBatchBody = taskBatchBodyForExpert
             ?: findBatch(
-                targetAnswerCount = config.targetAnswerCount,
+                targetAnswerCount = config.targetExpertAnswerCount,
                 batchSize = config.batchSize,
                 samplesDirectory = samplesDirectory,
                 userId = user.id!!,
@@ -168,22 +168,29 @@ class BatchService(
                     continue
                 }
 
-                val samples = refSentSamplesNotAnsweredByUser
+                // for all samples count the number of answers to the give question by users with given role
+                val sampleIdToRoleAnswerCount = answerRepository.countAnswerPerSampleForQuestionAndRole(
+                    question.id!!.toString(),
+                    userRole
+                )
 
-                val allAnswersToQuestion = answerRepository.findAllByQuestionId(question.id!!)
-                val samplesToAnswerCount = samples.map { sample ->
-                    val answersForSampleAndQuestion =
-                        allAnswersToQuestion.filter { answer -> answer.sampleId == sample.id }
-                    // only count answers where the answerer has the same role as the user who is currently requesting a new batch
-                    val answersForSampleAndQuestionWithRole = answersForSampleAndQuestion.filter { answer ->
-                        val rolesOfAnswerer = answer.user?.roles?.mapNotNull { it.name } ?: setOf()
-                        userRole in rolesOfAnswerer
-                    }
-                    sample to answersForSampleAndQuestionWithRole.size
+                val samplesToAnswerCount = refSentSamplesNotAnsweredByUser.map { sample ->
+                    val count = sampleIdToRoleAnswerCount.find { sampleIdToCount ->
+                        sampleIdToCount.sampleId == sample.id
+                    }?.answerCount ?: 0
+
+                    sample to count
                 }
 
+                // count all tasks (question = sample) where that the user could give answer to.
+                // That means the user did not answer yet and the target number of answers is not fulfilled.
+                val sampleIdsUserAnsweredQuestionFor = refSentSamplesNotAnsweredByUser.map { it.id }
+                val pendingCount = samplesToAnswerCount.filter { pair ->
+                    pair.first.id in sampleIdsUserAnsweredQuestionFor && pair.second < targetAnswerCount
+                }.size
+
                 // count pending answers for user in this combination of question and sentence
-                pendingAnswersCount += samplesToAnswerCount.filter { pair -> pair.second < targetAnswerCount }.size
+                pendingAnswersCount += pendingCount
                 if (firstFoundBatchForUser != null) {
                     // the batch for the user is already found. We only iterate the questions and sentences further to
                     // count pending answers of the user
