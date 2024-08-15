@@ -57,8 +57,6 @@ class SecurityConfig (val env: Environment) {
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
         val it = env.getProperty("app.url.roots")?.split(",")
-        println(it)
-        println(it?.javaClass)
         configuration.allowedOrigins = it
         configuration.allowedHeaders = listOf("*")
         configuration.allowedMethods = mutableListOf("GET", "POST", "PUT", "DELETE")

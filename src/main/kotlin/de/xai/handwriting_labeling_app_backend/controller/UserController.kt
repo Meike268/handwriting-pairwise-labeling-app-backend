@@ -40,7 +40,7 @@ class UserController(
     }
 
     @PostMapping
-    fun postUser(@RequestBody userCreateBody: UserCreateBody): ResponseEntity<out User> {
+    fun postUser(@RequestBody userCreateBody: UserCreateBody): ResponseEntity<User> {
         logger.info("Create new user: $userCreateBody")
         val savedUser = userService.createUserIfNotExist(userCreateBody)
 
