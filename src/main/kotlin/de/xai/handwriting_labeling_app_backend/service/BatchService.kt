@@ -79,7 +79,6 @@ class BatchService(
         if (taskBatchBody == null) {
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
         }
-        println( taskBatchBody.samples.map { it.id } )
         return GetBatchResponseBody(
             state = GET_BATCH_RESPONSE_STATE_SUCCESS,
             body = taskBatchBody
