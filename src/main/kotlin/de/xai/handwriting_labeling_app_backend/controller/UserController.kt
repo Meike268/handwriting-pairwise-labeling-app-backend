@@ -3,12 +3,10 @@ package de.xai.handwriting_labeling_app_backend.controller
 import de.xai.handwriting_labeling_app_backend.apimodel.UserCreateBody
 import de.xai.handwriting_labeling_app_backend.apimodel.UserInfoBody
 import de.xai.handwriting_labeling_app_backend.model.User
-import de.xai.handwriting_labeling_app_backend.repository.RoleRepository
 import de.xai.handwriting_labeling_app_backend.repository.UserRepository
 import de.xai.handwriting_labeling_app_backend.service.UserService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.web.bind.annotation.*
 import java.security.Principal
 
@@ -16,8 +14,7 @@ import java.security.Principal
 @RequestMapping("/users")
 class UserController(
     private val userRepository: UserRepository,
-    private val userService: UserService,
-    private val roleRepository: RoleRepository,
+    private val userService: UserService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -43,15 +40,7 @@ class UserController(
     }
 
     @PostMapping
-    fun postUser(@RequestBody userCreateBody: UserCreateBody): User {
-        return userRepository.save(User(
-            username = userCreateBody.username,
-            password = BCryptPasswordEncoder(12).encode(userCreateBody.password),
-            roles = userCreateBody.roleNames.map { roleName ->
-                roleRepository.findByName("ROLE_${roleName}")
-            }.toSet()
-        ))
-
+    fun postUser(@RequestBody userCreateBody: UserCreateBody): ResponseEntity<User> {
         logger.info("Create new user: $userCreateBody")
         val savedUser = userService.createUserIfNotExist(userCreateBody)
 
