@@ -32,7 +32,10 @@ class BatchService(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    fun generateBatch(username: String): GetBatchResponseBody {
+    fun generateBatch(
+        username: String,
+        excludedTasks: Map<Long, List<Long>> = emptyMap() // {questionId: List<sampleId>}
+    ): GetBatchResponseBody {
         val config = configHandler.readBatchServiceConfig()
 
         val user = userRepository.findByUsername(username)
@@ -55,7 +58,8 @@ class BatchService(
                 userId = user.id!!,
                 userRole = ROLE_EXPERT,
                 possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
-                possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList()
+                possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList(),
+                excludedTasks = excludedTasks
             )
         } else null
         // if no batch for expert answers was assembled, then create batch where user(=any) answer is missing
@@ -67,13 +71,15 @@ class BatchService(
                 userId = user.id!!,
                 userRole = ROLE_USER,
                 possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
-                possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList()
+                possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList(),
+                excludedTasks = excludedTasks
             )
 
 
         if (taskBatchBody == null) {
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
         }
+        println( taskBatchBody.samples.map { it.id } )
         return GetBatchResponseBody(
             state = GET_BATCH_RESPONSE_STATE_SUCCESS,
             body = taskBatchBody
@@ -112,7 +118,8 @@ class BatchService(
         userId: Long,
         userRole: String,
         possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
-        possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>
+        possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>,
+        excludedTasks: Map<Long, List<Long>>
     ): TaskBatchInfoBody? {
         val startTime = System.currentTimeMillis()
         // get questions and reference sentence that are stored in DB
@@ -155,6 +162,7 @@ class BatchService(
                 val answersToQuestionByUser = answerRepository.findAllByUserIdAndQuestionId(userId, question.id!!)
                 val refSentSamplesNotAnsweredByUser = refSentSamples.filter { sample ->
                     !sampleHasQuestionAnswerByUser(sample, answersToQuestionByUser)
+                            && excludedTasks[prioToQuestion.second.id]?.contains(sample.id) != true
                 }
                 if (refSentSamplesNotAnsweredByUser.isEmpty()) {
                     // the user answered all samples for this sentence and question, none pending
@@ -165,7 +173,8 @@ class BatchService(
 
                 val allAnswersToQuestion = answerRepository.findAllByQuestionId(question.id!!)
                 val samplesToAnswerCount = samples.map { sample ->
-                    val answersForSampleAndQuestion = allAnswersToQuestion.filter { answer -> answer.sampleId == sample.id }
+                    val answersForSampleAndQuestion =
+                        allAnswersToQuestion.filter { answer -> answer.sampleId == sample.id }
                     // only count answers where the answerer has the same role as the user who is currently requesting a new batch
                     val answersForSampleAndQuestionWithRole = answersForSampleAndQuestion.filter { answer ->
                         val rolesOfAnswerer = answer.user?.roles?.mapNotNull { it.name } ?: setOf()
