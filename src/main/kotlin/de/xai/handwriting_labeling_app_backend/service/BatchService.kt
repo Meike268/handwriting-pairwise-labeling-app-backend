@@ -53,7 +53,7 @@ class BatchService(
             // user is expert -> first try to generate a batch of samples where expert answer is missing
             findBatch(
                 targetAnswerCount = config.targetAnswerCount,
-                batchSize = 200,
+                batchSize = config.batchSize,
                 samplesDirectory = samplesDirectory,
                 userId = user.id!!,
                 userRole = ROLE_EXPERT,
@@ -66,7 +66,7 @@ class BatchService(
         val taskBatchBody = taskBatchBodyForExpert
             ?: findBatch(
                 targetAnswerCount = config.targetAnswerCount,
-                batchSize = 200,
+                batchSize = config.batchSize,
                 samplesDirectory = samplesDirectory,
                 userId = user.id!!,
                 userRole = ROLE_USER,
