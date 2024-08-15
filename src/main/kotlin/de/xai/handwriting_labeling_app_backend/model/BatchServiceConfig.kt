@@ -15,11 +15,11 @@ data class BatchServiceConfig(
     /**
      * For each applicable combination of sample and question, we need to collect n answers by experts
      * */
-    @JsonProperty("minExpertAnswerCount")
-    val minExpertAnswerCount: Int,
+    @JsonProperty("targetExpertAnswerCount")
+    val targetExpertAnswerCount: Int,
 
     /**
-     * For each applicable combination of sample and question, we need to collect n answers by any user
+     * For each applicable combination of sample and question, we need to collect n answers by any user of any role
      * */
     @JsonProperty("targetAnswerCount")
     val targetAnswerCount: Int,

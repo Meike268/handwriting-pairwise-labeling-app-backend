@@ -23,7 +23,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 "{
    \"samplesOrigin\": \"xai_sentences\",
    \"batchSize\": 10,
-   \"minExpertAnswerCount\": 1,
+   \"targetExpertAnswerCount\": 1,
    \"targetAnswerCount\": 3,
    \"prioritizedReferenceSentences\": [
      {
