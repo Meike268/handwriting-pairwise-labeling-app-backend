@@ -17,8 +17,8 @@ class UserService(private val userRepository: UserRepository, val roleRepository
     fun createUserIfNotExist(userCreateBody: UserCreateBody): User? {
         val userWithNameFromDB = userRepository.findByUsername(userCreateBody.username)
 
-        if (userWithNameFromDB == null) {
-            return userRepository.save(User(
+        return if (userWithNameFromDB == null) {
+            userRepository.save(User(
                 username = userCreateBody.username,
                 password = userCreateBody.password,
                 roles = userCreateBody.roleNames.map { roleName ->
@@ -26,7 +26,7 @@ class UserService(private val userRepository: UserRepository, val roleRepository
                 }.toSet()
             ))
         } else {
-            return null
+            null
         }
     }
 }
