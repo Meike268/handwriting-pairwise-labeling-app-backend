@@ -21,7 +21,7 @@ class AnswerController(
 
     @PostMapping
     fun createAnswer(principal: Principal, @RequestBody answer: AnswerCreateBody): ResponseEntity<Answer> {
-        logger.info("Received new answer: $answer")
+        logger.info("Received new answer: $answer from user ${principal.name}")
 
         return ResponseEntity.ok(
             answerService.createOrUpdate(
@@ -36,7 +36,7 @@ class AnswerController(
 
     @PutMapping
     fun updateAnswer(principal: Principal, @RequestBody answer: AnswerCreateBody): ResponseEntity<Answer> {
-        logger.info("Updating answer: $answer")
+        logger.info("Updating answer: $answer from user ${principal.name}\"")
 
         return ResponseEntity.ok(answerService.createOrUpdate(
             principal.name,
