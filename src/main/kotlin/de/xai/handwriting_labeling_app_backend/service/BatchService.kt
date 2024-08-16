@@ -184,7 +184,7 @@ class BatchService(
                 val sentence = prioToSentence.second
                 logger.info("QuestinID: ${question.id}, sentId: ${sentence.id}")
 
-                var taskStartTime = System.currentTimeMillis()
+                val taskStartTime = System.currentTimeMillis()
 
                 if (question !in sentence.applicableQuestions!!) {
                     // question not applicable to sentence, continue with next sentence
@@ -232,6 +232,7 @@ class BatchService(
                 val sampleIdToRoleAnswerCount = doAndAddTimer(
                     addToTimer = { time -> timeGetAnswersWithCountsFromDB += time }
                 ) {
+                    // ToDo: move out of loop. Instead here reduce to answers of current question
                     answerRepository.countAnswerPerSampleForQuestionAndRole(
                         question.id!!.toString(),
                         userRole
@@ -302,7 +303,7 @@ class BatchService(
                 }
                 val timeInLoop = System.currentTimeMillis() - taskStartTime
                 comboTimes.addLast(timeInLoop)
-                logger.info("Finished task (assmebled batch) questionId: ${question.id}, sentId: ${sentence.id} in ${System.currentTimeMillis() - taskStartTime}ms")
+                logger.info("Finished task (BATCH CREATED) questionId: ${question.id}, sentId: ${sentence.id} in ${System.currentTimeMillis() - taskStartTime}ms")
             }
         }
         // now we iterated all feasible combinations of question and sentence and counted pending answers for this user
