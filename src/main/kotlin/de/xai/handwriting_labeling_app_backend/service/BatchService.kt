@@ -2,10 +2,7 @@ package de.xai.handwriting_labeling_app_backend.service
 
 import de.xai.handwriting_labeling_app_backend.apimodel.*
 import de.xai.handwriting_labeling_app_backend.component.BatchConfigHandler
-import de.xai.handwriting_labeling_app_backend.model.Answer
-import de.xai.handwriting_labeling_app_backend.model.PrioritizedQuestion
-import de.xai.handwriting_labeling_app_backend.model.PrioritizedReferenceSentence
-import de.xai.handwriting_labeling_app_backend.model.Sample
+import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_FINISHED
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_SUCCESS
@@ -24,12 +21,11 @@ import kotlin.jvm.optionals.getOrElse
 class BatchService(
     private val questionRepository: QuestionRepository,
     private val userRepository: UserRepository,
-    private val sampleRepository: SampleRepository,
     private val exampleRepository: ExampleRepository,
     private val referenceSentenceRepository: ReferenceSentenceRepository,
     private val answerRepository: AnswerRepository,
     private val configHandler: BatchConfigHandler,
-    private val answerService: AnswerService
+    private val taskService: TaskService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -149,18 +145,6 @@ class BatchService(
                 }
         }.shuffled().sortedBy { it.first.priority } // shuffle before sort, to randomly pick between same priority
 
-        val allSamples = doAndAddTimer(
-            addToTimer = { time -> logger.info("Look up all samples from DB to $time ms") }
-        ) {
-            sampleRepository.findAllInDirectoryRecursive(samplesDirectory)
-        }
-
-        val answersOfUser = doAndAddTimer(
-            addToTimer = { time -> logger.info("Look up all answers of user from DB to $time ms") }
-        ) {
-            answerRepository.findByUserId(userId)
-        }
-
         val submittedAnswersCount = answerRepository.findByUserId(userId).size
         var pendingAnswersCount = 0
 
@@ -169,7 +153,6 @@ class BatchService(
 
         val comboTimes = mutableListOf<Long>()
         var timeReducingAllSamplesToRefSent: Long = 0
-        var timeFindAnswersUserQuestion: Long = 0
         var timeFilterRefSentSamplesForNotAnsweredByUser: Long = 0
         var timeGetAnswersWithCountsFromDB: Long = 0
         var timeMapCountsOntoRefSentSamplesNotAnsweredByUser: Long = 0
@@ -194,33 +177,22 @@ class BatchService(
                     continue
                 }
 
-                // all samples that correspond to the selected reference sentence
-                val refSentSamples = doAndAddTimer(
+                // All tasks with their corresponding answers
+                val tasksToAnswers = doAndAddTimer(
                     addToTimer = { time -> timeReducingAllSamplesToRefSent += time }
                 ) {
-                    allSamples.filter { sample ->
-                        sentence.id == sample.referenceSentence?.id
-                    }
+                    val tasks = taskService.findAll().filter { it.question.id == question.id && it.sample.referenceSentence?.id == sentence.id }
+                    val questionAnswers = answerRepository.findAllByQuestionId(question.id!!)
+                    tasks.map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
                 }
 
-                // all samples that correspond to the selected sentence, that the user has not answered the question yet
-                val answersToQuestionByUser = doAndAddTimer(
-                    addToTimer = { time -> timeFindAnswersUserQuestion += time }
-                ) {
-                    //ToDo
-                    answersOfUser.filter { answer -> answer.question?.id == question.id }
-                    //answerRepository.findAllByUserIdAndQuestionId(userId, question.id!!)
-                }
 
-                val refSentSamplesNotAnsweredByUser = doAndAddTimer(
+                val tasksNotAnsweredByUser = doAndAddTimer(
                     addToTimer = { time -> timeFilterRefSentSamplesForNotAnsweredByUser += time }
                 ) {
-                    refSentSamples.filter { sample ->
-                        !sampleHasQuestionAnswerByUser(sample, answersToQuestionByUser)
-                                && excludedTasks[prioToQuestion.second.id]?.contains(sample.id) != true
-                    }
+                    tasksToAnswers.filter { ( _, answers ) -> !answers.any { it.user?.id == userId } }
                 }
-                if (refSentSamplesNotAnsweredByUser.isEmpty()) {
+                if (tasksNotAnsweredByUser.isEmpty()) {
                     // the user answered all samples for this sentence and question, none pending
                     val timeInLoop = System.currentTimeMillis() - taskStartTime
                     comboTimes.addLast(timeInLoop)
@@ -228,26 +200,11 @@ class BatchService(
                     continue
                 }
 
-                // for all samples count the number of answers to the give question by users with given role
-                val sampleIdToRoleAnswerCount = doAndAddTimer(
-                    addToTimer = { time -> timeGetAnswersWithCountsFromDB += time }
-                ) {
-                    // ToDo: move out of loop. Instead here reduce to answers of current question
-                    answerRepository.countAnswerPerSampleForQuestionAndRole(
-                        question.id!!.toString(),
-                        userRole
-                    )
-                }
-
                 val samplesToAnswerCount = doAndAddTimer(
                     addToTimer = { time -> timeMapCountsOntoRefSentSamplesNotAnsweredByUser += time }
                 ) {
-                    refSentSamplesNotAnsweredByUser.map { sample ->
-                        val count = sampleIdToRoleAnswerCount.find { sampleIdToCount ->
-                            sampleIdToCount.sampleId == sample.id
-                        }?.answerCount ?: 0
-
-                        sample to count
+                    tasksNotAnsweredByUser.map { (task, answers) ->
+                        task.sample to answers.size
                     }
                 }
 
@@ -256,7 +213,7 @@ class BatchService(
                 val pendingCount = doAndAddTimer(
                     addToTimer = { time -> timeCountPendingAnswersOfUser += time }
                 ) {
-                    val sampleIdsUserAnsweredQuestionFor = refSentSamplesNotAnsweredByUser.map { it.id }
+                    val sampleIdsUserAnsweredQuestionFor = tasksNotAnsweredByUser.map { (task, _) -> task.sample.id }
                     samplesToAnswerCount.filter { pair ->
                         pair.first.id in sampleIdsUserAnsweredQuestionFor && pair.second < targetAnswerCount
                     }.size
@@ -313,7 +270,6 @@ class BatchService(
         logger.info(
             "Spent time on operations:\n" +
                     "timeReducingAllSamplesToRefSent: $timeReducingAllSamplesToRefSent\n" +
-                    "timeFindAnswersUserQuestion: $timeFindAnswersUserQuestion\n" +
                     "timeFilterRefSentSamplesForNotAnsweredByUser: $timeFilterRefSentSamplesForNotAnsweredByUser\n" +
                     "timeGetAnswersWithCountsFromDB: $timeGetAnswersWithCountsFromDB\n" +
                     "timeMapCountsOntoRefSentSamplesNotAnsweredByUser: $timeMapCountsOntoRefSentSamplesNotAnsweredByUser\n" +
@@ -323,15 +279,6 @@ class BatchService(
         )
 
         return firstFoundBatchForUser
-    }
-
-    private fun sampleHasQuestionAnswerByUser(sample: Sample, userAnswersForQuestion: List<Answer>): Boolean {
-        for (answer in userAnswersForQuestion) {
-            if (answer.sampleId == sample.id) {
-                return true
-            }
-        }
-        return false
     }
 
     fun <B> doAndAddTimer(addToTimer: (Long) -> Unit, function: () -> B): B {

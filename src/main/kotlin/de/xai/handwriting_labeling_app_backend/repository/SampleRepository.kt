@@ -50,6 +50,10 @@ class SampleRepository(
             Sample(sampleId, null)
     }
 
+    fun findAll(): List<Sample> {
+        return samples
+    }
+
     fun findAllInDirectoryRecursive(directory: File): List<Sample> {
         return samples.filter { it.getResourceFile().startsWith(directory.path) }
     }

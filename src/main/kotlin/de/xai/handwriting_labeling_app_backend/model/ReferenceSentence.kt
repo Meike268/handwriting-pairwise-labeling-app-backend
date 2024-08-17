@@ -14,7 +14,7 @@ class ReferenceSentence(
     var content: String? = null,
 
     @Column
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "applicable_question",
         joinColumns = [JoinColumn(name = "reference_sentence_id", referencedColumnName = "id")],
