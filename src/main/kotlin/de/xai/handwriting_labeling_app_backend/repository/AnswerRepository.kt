@@ -1,10 +1,7 @@
 package de.xai.handwriting_labeling_app_backend.repository
 
 import de.xai.handwriting_labeling_app_backend.model.Answer
-import de.xai.handwriting_labeling_app_backend.model.SampleIdToAnswerCount
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 
 interface AnswerRepository: JpaRepository<Answer, Long> {
     fun findAllByQuestionId(questionId: Long): List<Answer>

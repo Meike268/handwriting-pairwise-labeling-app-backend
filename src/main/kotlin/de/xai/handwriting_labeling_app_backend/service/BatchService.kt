@@ -129,7 +129,6 @@ class BatchService(
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>,
         excludedTasks: Map<Long, List<Long>>
     ): TaskBatchInfoBody? {
-        val logStartTime = System.currentTimeMillis()
         logger.info("Generating random batch for user $userId with role $userRole")
         // get questions and reference sentence that are stored in DB
         val priorityToQuestionPairsSorted = possiblePrioritizedQuestions.map { prioritizedQuestion ->
@@ -149,142 +148,58 @@ class BatchService(
         var pendingAnswersCount = 0
 
         var firstFoundBatchForUser: TaskBatchInfoBody? = null
-
-
-        val comboTimes = mutableListOf<Long>()
-        var timeReducingAllSamplesToRefSent: Long = 0
-        var timeFilterRefSentSamplesForNotAnsweredByUser: Long = 0
-        var timeGetAnswersWithCountsFromDB: Long = 0
-        var timeMapCountsOntoRefSentSamplesNotAnsweredByUser: Long = 0
-        var timeCountPendingAnswersOfUser: Long = 0
-        var timeToFindBatchFromSampleToCountMap: Long = 0
-
-
         for (prioToQuestion in priorityToQuestionPairsSorted) {
             for (prioToSentence in priorityToSentencePairsSorted) {
 
                 val question = prioToQuestion.second
                 val sentence = prioToSentence.second
-                logger.info("QuestinID: ${question.id}, sentId: ${sentence.id}")
-
-                val taskStartTime = System.currentTimeMillis()
 
                 if (question !in sentence.applicableQuestions!!) {
                     // question not applicable to sentence, continue with next sentence
-                    val timeInLoop = System.currentTimeMillis() - taskStartTime
-                    comboTimes.addLast(timeInLoop)
-                    logger.info("Finished task (not applicable) questionId: ${question.id}, sentId: ${sentence.id} in ${timeInLoop}ms")
                     continue
                 }
 
-                // All tasks with their corresponding answers
-                val tasksToAnswers = doAndAddTimer(
-                    addToTimer = { time -> timeReducingAllSamplesToRefSent += time }
-                ) {
-                    val tasks = taskService.findAll().filter { it.question.id == question.id && it.sample.referenceSentence?.id == sentence.id }
-                    val questionAnswers = answerRepository.findAllByQuestionId(question.id!!)
-                    tasks.map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
-                }
+                val questionAnswers = answerRepository.findAllByQuestionId(question.id!!)
 
-
-                val tasksNotAnsweredByUser = doAndAddTimer(
-                    addToTimer = { time -> timeFilterRefSentSamplesForNotAnsweredByUser += time }
-                ) {
-                    tasksToAnswers.filter { ( _, answers ) -> !answers.any { it.user?.id == userId } }
-                }
-                if (tasksNotAnsweredByUser.isEmpty()) {
-                    // the user answered all samples for this sentence and question, none pending
-                    val timeInLoop = System.currentTimeMillis() - taskStartTime
-                    comboTimes.addLast(timeInLoop)
-                    logger.info("Finished task (No unanswered by user) questionId: ${question.id}, sentId: ${sentence.id} in ${System.currentTimeMillis() - taskStartTime}ms")
-                    continue
-                }
-
-                val samplesToAnswerCount = doAndAddTimer(
-                    addToTimer = { time -> timeMapCountsOntoRefSentSamplesNotAnsweredByUser += time }
-                ) {
-                    tasksNotAnsweredByUser.map { (task, answers) ->
-                        task.sample to answers.size
-                    }
-                }
-
-                // count all tasks (question = sample) where that the user could give answer to.
+                // All tasks with their corresponding answers that are available to be answered by the user
                 // That means the user did not answer yet and the target number of answers is not fulfilled.
-                val pendingCount = doAndAddTimer(
-                    addToTimer = { time -> timeCountPendingAnswersOfUser += time }
-                ) {
-                    val sampleIdsUserAnsweredQuestionFor = tasksNotAnsweredByUser.map { (task, _) -> task.sample.id }
-                    samplesToAnswerCount.filter { pair ->
-                        pair.first.id in sampleIdsUserAnsweredQuestionFor && pair.second < targetAnswerCount
-                    }.size
-                }
+                val availableTasks = taskService.findAll()
+                    .filter { it.question.id == question.id && it.sample.referenceSentence?.id == sentence.id }
+                    .map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
+                    .filter { (_, answers) -> answers.size < targetAnswerCount && !answers.any { it.user?.id == userId } }
+                pendingAnswersCount += availableTasks.size
 
-                // count pending answers for user in this combination of question and sentence
-                pendingAnswersCount += pendingCount
-                if (firstFoundBatchForUser != null) {
+                if (firstFoundBatchForUser != null || availableTasks.isEmpty()) {
+                    // the user answered all samples for this sentence and question, none pending
+                    // OR
                     // the batch for the user is already found. We only iterate the questions and sentences further to
                     // count pending answers of the user
-                    val timeInLoop = System.currentTimeMillis() - taskStartTime
-                    comboTimes.addLast(timeInLoop)
-                    logger.info("Finished task (batch already found) questionId: ${question.id}, sentId: ${sentence.id} in ${System.currentTimeMillis() - taskStartTime}ms")
                     continue
                 }
 
-                // start by collecting at least one answer per sample. If all samples have one answer, then collect answers
-                // until every sample has 2 answers, .... until every sample has targetAnswerCount samples.
-                // Then stop collecting answers for this combo of sentence and question
-                doAndAddTimer(
-                    addToTimer = { time -> timeToFindBatchFromSampleToCountMap += time }
-                ) {
-                    for (answerCount in 1..targetAnswerCount) {
-                        val samplesToMakeBatchFrom = samplesToAnswerCount.filter { sampleToCount ->
-                            sampleToCount.second < answerCount
-                        }.map { sampleToCount -> sampleToCount.first }
+                val batchSamples = availableTasks
+                    .shuffled()
+                    .sortedBy { (_, answers) -> answers.size }
+                    .take(batchSize)
+                    .map { (task, _) -> task.sample }
 
-                        if (samplesToMakeBatchFrom.isNotEmpty()) {
-                            val batchSamples = samplesToMakeBatchFrom.shuffled().take(batchSize)
-                            val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
-                                ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
-                            firstFoundBatchForUser = TaskBatchInfoBody(
-                                question = question,
-                                example = example,
-                                referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
-                                samples = batchSamples.map { SampleInfoBody.fromSample(it) },
-                                userAnswerCounts = GetUserAnswerCountsBody(
-                                    submittedAnswersCount = submittedAnswersCount,
-                                    pendingAnswersCount = null
-                                )
-                            )
-                        }
-                    }
-                }
-                val timeInLoop = System.currentTimeMillis() - taskStartTime
-                comboTimes.addLast(timeInLoop)
-                logger.info("Finished task (BATCH CREATED) questionId: ${question.id}, sentId: ${sentence.id} in ${System.currentTimeMillis() - taskStartTime}ms")
+                val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
+                    ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
+                firstFoundBatchForUser = TaskBatchInfoBody(
+                    question = question,
+                    example = example,
+                    referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
+                    samples = batchSamples.map { SampleInfoBody.fromSample(it) },
+                    userAnswerCounts = GetUserAnswerCountsBody(
+                        submittedAnswersCount = submittedAnswersCount,
+                        pendingAnswersCount = null
+                    )
+                )
             }
         }
         // now we iterated all feasible combinations of question and sentence and counted pending answers for this user
         firstFoundBatchForUser?.userAnswerCounts?.pendingAnswersCount = pendingAnswersCount
 
-        logger.info("Batch generation for user with id ${userId} took ${System.currentTimeMillis() - logStartTime} ms")
-        logger.info(
-            "Spent time on operations:\n" +
-                    "timeReducingAllSamplesToRefSent: $timeReducingAllSamplesToRefSent\n" +
-                    "timeFilterRefSentSamplesForNotAnsweredByUser: $timeFilterRefSentSamplesForNotAnsweredByUser\n" +
-                    "timeGetAnswersWithCountsFromDB: $timeGetAnswersWithCountsFromDB\n" +
-                    "timeMapCountsOntoRefSentSamplesNotAnsweredByUser: $timeMapCountsOntoRefSentSamplesNotAnsweredByUser\n" +
-                    "timeCountPendingAnswersOfUser: $timeCountPendingAnswersOfUser\n" +
-                    "timeToFindBatchFromSampleToCountMap: $timeToFindBatchFromSampleToCountMap\n" +
-                    "sum of loops: ${comboTimes.sum()}"
-        )
-
         return firstFoundBatchForUser
-    }
-
-    fun <B> doAndAddTimer(addToTimer: (Long) -> Unit, function: () -> B): B {
-        val startTime = System.currentTimeMillis()
-        val result = function()
-        addToTimer(System.currentTimeMillis() - startTime)
-        return result
     }
 }
