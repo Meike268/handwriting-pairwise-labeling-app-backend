@@ -1,6 +1,7 @@
 package de.xai.handwriting_labeling_app_backend.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.ROLE_EXPERT
 import jakarta.persistence.*
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -42,5 +43,9 @@ class User(
 
     override fun toString(): String {
         return "User(id=$id, username=$username, password=$password, roles=$roles)"
+    }
+
+    fun isExpert(): Boolean {
+        return this.roles.map { it.name }.contains(ROLE_EXPERT)
     }
 }

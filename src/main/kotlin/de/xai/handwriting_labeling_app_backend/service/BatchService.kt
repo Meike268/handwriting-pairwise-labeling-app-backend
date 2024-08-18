@@ -6,15 +6,9 @@ import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_FINISHED
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.GET_BATCH_RESPONSE_STATE_SUCCESS
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.OTHERS_DIRECTORY_NAME
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.ROLE_EXPERT
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.ROLE_USER
 import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SENTENCE_DIRECTORY_NAME
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.othersDirectory
-import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.xaiSentencesDirectory
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.io.File
 import kotlin.jvm.optionals.getOrElse
 
 @Service
@@ -51,39 +45,19 @@ class BatchService(
             ?: throw IllegalArgumentException("No user found with username: $username")
         logger.info("Generating random batch for user $user")
 
-        val samplesDirectory = when (config.samplesOrigin) {
-            XAI_SENTENCE_DIRECTORY_NAME -> xaiSentencesDirectory
-            OTHERS_DIRECTORY_NAME -> othersDirectory
-            else -> throw IllegalArgumentException("Sample origin is not supported. No directory corresponds to ${config.samplesOrigin}")
-        }
-
-        val userRoles = user.roles.mapNotNull { it.name }
-        val taskBatchBodyForExpert = if (ROLE_EXPERT in userRoles) {
-            // user is expert -> first try to generate a batch of samples where expert answer is missing
-            findBatch(
+        val taskBatchBody = if (config.samplesOrigin == XAI_SENTENCE_DIRECTORY_NAME)
+            findXaiSentenceBatch(
                 targetAnswerCount = config.targetAnswerCount,
+                targetExpertAnswerCount = config.targetExpertAnswerCount,
                 batchSize = config.batchSize,
-                samplesDirectory = samplesDirectory,
                 userId = user.id!!,
-                userRole = ROLE_EXPERT,
+                forExpert = user.isExpert(),
                 possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
                 possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList(),
                 excludedTasks = excludedTasks
             )
-        } else null
-        // if no batch for expert answers was assembled, then create batch where user(=any) answer is missing
-        val taskBatchBody = taskBatchBodyForExpert
-            ?: findBatch(
-                targetAnswerCount = config.targetExpertAnswerCount,
-                batchSize = config.batchSize,
-                samplesDirectory = samplesDirectory,
-                userId = user.id!!,
-                userRole = ROLE_USER,
-                possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
-                possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList(),
-                excludedTasks = excludedTasks
-            )
-
+        else
+            TODO()
 
         if (taskBatchBody == null) {
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
@@ -119,17 +93,16 @@ class BatchService(
      *      THEN this sample will have more answers than specified in the config. This is because we only check
      *      the DB state and config when we create a batch. We do not check on POST answer.
      * */
-    fun findBatch(
+    private fun findXaiSentenceBatch(
         targetAnswerCount: Int,
+        targetExpertAnswerCount: Int,
         batchSize: Int,
-        samplesDirectory: File,
         userId: Long,
-        userRole: String,
+        forExpert: Boolean,
         possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>,
         excludedTasks: Map<Long, List<Long>>
     ): TaskBatchInfoBody? {
-        logger.info("Generating random batch for user $userId with role $userRole")
         // get questions and reference sentence that are stored in DB
         val priorityToQuestionPairsSorted = possiblePrioritizedQuestions.map { prioritizedQuestion ->
             prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId).getOrElse {
@@ -164,9 +137,19 @@ class BatchService(
                 // All tasks with their corresponding answers that are available to be answered by the user
                 // That means the user did not answer yet and the target number of answers is not fulfilled.
                 val availableTasks = taskService.findAll()
-                    .filter { it.question.id == question.id && it.sample.referenceSentence?.id == sentence.id }
+                    .filter {
+                        it.question.id == question.id
+                        && it.sample.referenceSentence?.id == sentence.id // Also filters non-xaiSentence Samples
+                        && excludedTasks[question.id]?.contains(it.sample.id) != true
+                    }
+                    // Gather corresponding answers
                     .map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
-                    .filter { (_, answers) -> answers.size < targetAnswerCount && !answers.any { it.user?.id == userId } }
+                    // Exclude tasks that have enough answers or have been answered by user already
+                    .filter { (_, answers) ->
+                        !answers.any { it.user?.id == userId }
+                        && answers.size < targetAnswerCount
+                        && !(forExpert && targetExpertAnswerCount > answers.filter { it.isFromExpert() }.size)
+                    }
                 pendingAnswersCount += availableTasks.size
 
                 if (firstFoundBatchForUser != null || availableTasks.isEmpty()) {
@@ -180,6 +163,7 @@ class BatchService(
                 val batchSamples = availableTasks
                     .shuffled()
                     .sortedBy { (_, answers) -> answers.size }
+                    .sortedBy { (_, answers) -> if (forExpert) answers.filter {it.isFromExpert() }.size else null }
                     .take(batchSize)
                     .map { (task, _) -> task.sample }
 
