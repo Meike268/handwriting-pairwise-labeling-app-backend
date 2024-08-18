@@ -10,6 +10,7 @@ import de.xai.handwriting_labeling_app_backend.utils.Constants.Companion.XAI_SEN
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrElse
+import kotlin.math.min
 
 @Service
 class BatchService(
@@ -165,7 +166,7 @@ class BatchService(
                 val batchSamples = availableTasks
                     .shuffled()
                     .sortedBy { (_, answers) -> answers.size }
-                    .sortedBy { (_, answers) -> if (forExpert) answers.filter {it.isFromExpert() }.size else null }
+                    .sortedBy { (_, answers) -> if (forExpert) min(targetExpertAnswerCount, answers.filter {it.isFromExpert() }.size) else null }
                     .take(batchSize)
                     .map { (task, _) -> task.sample }
 
