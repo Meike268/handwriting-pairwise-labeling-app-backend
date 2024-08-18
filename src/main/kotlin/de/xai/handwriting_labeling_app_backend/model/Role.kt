@@ -17,4 +17,8 @@ class Role(
     override fun getAuthority(): String {
         return this.name!!
     }
+
+    override fun toString(): String {
+        return "$name"
+    }
 }

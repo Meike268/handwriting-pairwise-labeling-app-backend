@@ -27,7 +27,9 @@ class Answer(
 
     @Column(name = "submission_timestamp")
     val submissionTimestamp: LocalDateTime? = null,
-)
+) {
+    fun isFromExpert(): Boolean = user?.isExpert() ?: false
+}
 
 data class AnswerId(
     private val sampleId: Long? = null,

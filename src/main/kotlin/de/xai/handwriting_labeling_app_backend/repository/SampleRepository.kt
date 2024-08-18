@@ -32,7 +32,13 @@ import java.io.FileNotFoundException
 class SampleRepository(
     private val referenceSentenceRepository: ReferenceSentenceRepository
 ) {
-    fun fromFile(file: File): Sample {
+    private val samples: List<Sample> = samplesDirectory.walk()
+        .filter { it.isFile }
+        .map { nestedFile ->
+            this.fromFile(nestedFile)
+        }.toList()
+
+    private fun fromFile(file: File): Sample {
         if (!file.exists()) {
             throw FileNotFoundException()
         }
@@ -45,23 +51,11 @@ class SampleRepository(
     }
 
     fun findAll(): List<Sample> {
-        return samplesDirectory.walk()
-            .filter { it.isFile }
-            .map { nestedFile ->
-                this.fromFile(nestedFile)
-            }.toList()
+        return samples
     }
 
     fun findAllInDirectoryRecursive(directory: File): List<Sample> {
-        return directory.walk()
-            .filter { it.isFile }
-            .map { nestedFile ->
-                this.fromFile(nestedFile)
-            }.toList()
-    }
-
-    fun findById(id: Long): Sample? {
-        return findAll().find { it.id == id }
+        return samples.filter { it.getResourceFile().startsWith(directory.path) }
     }
 
     companion object {
