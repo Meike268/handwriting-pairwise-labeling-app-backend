@@ -41,11 +41,11 @@ class User(
         return this.username!!
     }
 
-    override fun toString(): String {
-        return "User(id=$id, username=$username, password=$password, roles=$roles)"
-    }
-
     fun isExpert(): Boolean {
         return this.roles.map { it.name }.contains(ROLE_EXPERT)
+    }
+
+    override fun toString(): String {
+        return "User(id=$id, username=$username, roles=$roles)"
     }
 }
