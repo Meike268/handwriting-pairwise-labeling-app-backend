@@ -108,24 +108,27 @@ class BatchService(
             prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId).getOrElse {
                 throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
             }
-        }.shuffled().sortedBy { it.first.priority } // shuffle before sort, to randomly pick between same priority
+        }.shuffled()
 
         val priorityToSentencePairsSorted = possiblePrioritizedSentences.map { prioritizedSentence ->
             prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId)
                 .getOrElse {
                     throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
                 }
-        }.shuffled().sortedBy { it.first.priority } // shuffle before sort, to randomly pick between same priority
+        }.shuffled()
 
         val submittedAnswersCount = answerRepository.findByUserId(userId).size
         var pendingAnswersCount = 0
 
+        var firstFoundBatchPrio: Int? = null
         var firstFoundBatchForUser: TaskBatchInfoBody? = null
         for (prioToQuestion in priorityToQuestionPairsSorted) {
             for (prioToSentence in priorityToSentencePairsSorted) {
 
                 val question = prioToQuestion.second
                 val sentence = prioToSentence.second
+                val currentBatchPrio = prioToQuestion.first.priority + prioToSentence.first.priority
+                println("${sentence.id} - ${question.id}: $currentBatchPrio ${if (firstFoundBatchPrio == null || currentBatchPrio < firstFoundBatchPrio) "<-" else ""}")
 
                 if (question !in sentence.applicableQuestions!!) {
                     // question not applicable to sentence, continue with next sentence
@@ -152,7 +155,7 @@ class BatchService(
                     }
                 pendingAnswersCount += availableTasks.size
 
-                if (firstFoundBatchForUser != null || availableTasks.isEmpty()) {
+                if ((firstFoundBatchPrio != null && currentBatchPrio >= firstFoundBatchPrio) || availableTasks.isEmpty()) {
                     // the user answered all samples for this sentence and question, none pending
                     // OR
                     // the batch for the user is already found. We only iterate the questions and sentences further to
@@ -179,6 +182,8 @@ class BatchService(
                         pendingAnswersCount = null
                     )
                 )
+                println("Set first found batch prio to $currentBatchPrio")
+                firstFoundBatchPrio = currentBatchPrio
             }
         }
         // now we iterated all feasible combinations of question and sentence and counted pending answers for this user
