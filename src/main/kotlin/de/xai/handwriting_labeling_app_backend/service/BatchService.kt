@@ -128,7 +128,6 @@ class BatchService(
                 val question = prioToQuestion.second
                 val sentence = prioToSentence.second
                 val currentBatchPrio = prioToQuestion.first.priority + prioToSentence.first.priority
-                println("${sentence.id} - ${question.id}: $currentBatchPrio ${if (firstFoundBatchPrio == null || currentBatchPrio < firstFoundBatchPrio) "<-" else ""}")
 
                 if (question !in sentence.applicableQuestions!!) {
                     // question not applicable to sentence, continue with next sentence
@@ -182,7 +181,6 @@ class BatchService(
                         pendingAnswersCount = null
                     )
                 )
-                println("Set first found batch prio to $currentBatchPrio")
                 firstFoundBatchPrio = currentBatchPrio
             }
         }
