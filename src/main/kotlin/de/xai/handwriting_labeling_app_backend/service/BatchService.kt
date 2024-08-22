@@ -150,7 +150,7 @@ class BatchService(
                 .filter { (_, answers) ->
                     !answers.any { it.user?.id == userId }
                     && answers.size < targetAnswerCount
-                            && !(forExpert && answers.filter { it.isFromExpert() }.size > targetExpertAnswerCount)
+                            && !(forExpert && answers.filter { it.isFromExpert() }.size >= targetExpertAnswerCount)
                 }
             pendingAnswersCount += availableTasks.size
 
