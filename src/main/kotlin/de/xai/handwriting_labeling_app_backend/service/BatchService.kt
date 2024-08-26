@@ -147,6 +147,8 @@ class BatchService(
                 // Gather corresponding answers
                 .map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
                 // Only keep tasks that: 1) the user has not answered yet and 2) are missing answers to satisfy targetAnswerCount/targetExpertAnswerCount
+                // Note, that this implementation can select targetAnswerCount + targetExpertAnswerCount answers for the
+                // same sample when at first tAC users answer the task and them tEAC experts give an answer.
                 .filter { (_, answersOfTask) ->
                     notAnsweredByUser(answersOfTask, userId)
                     && (missingAnswerFromAnyone(answersOfTask, targetAnswerCount)
@@ -188,18 +190,19 @@ class BatchService(
         return firstFoundBatch
     }
 
-    private fun missingAnswerFromExpert(
+
+    private fun notAnsweredByUser(
         answers: List<Answer>,
-        targetExpertAnswerCount: Int
-    ) = answers.filter { it.isFromExpert() }.size >= targetExpertAnswerCount
+        userId: Long
+    ) = !answers.any { it.user?.id == userId }
 
     private fun missingAnswerFromAnyone(
         answers: List<Answer>,
         targetAnswerCount: Int
     ) = answers.size < targetAnswerCount
 
-    private fun notAnsweredByUser(
+    private fun missingAnswerFromExpert(
         answers: List<Answer>,
-        userId: Long
-    ) = !answers.any { it.user?.id == userId }
+        targetExpertAnswerCount: Int
+    ) = answers.filter { it.isFromExpert() }.size >= targetExpertAnswerCount
 }
