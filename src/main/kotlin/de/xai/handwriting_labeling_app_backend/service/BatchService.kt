@@ -146,11 +146,11 @@ class BatchService(
                 }
                 // Gather corresponding answers
                 .map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
-                // Exclude tasks that have enough answers or have been answered by user already
-                .filter { (_, answers) ->
-                    !answers.any { it.user?.id == userId }
-                    && answers.size < targetAnswerCount
-                            && !(forExpert && answers.filter { it.isFromExpert() }.size >= targetExpertAnswerCount)
+                // Only keep tasks that: 1) the user has not answered yet and 2) are missing answers to satisfy targetAnswerCount/targetExpertAnswerCount
+                .filter { (_, answersOfTask) ->
+                    notAnsweredByUser(answersOfTask, userId)
+                    && (missingAnswerFromAnyone(answersOfTask, targetAnswerCount)
+                            || (forExpert && missingAnswerFromExpert(answersOfTask, targetExpertAnswerCount)))
                 }
             pendingAnswersCount += availableTasks.size
 
@@ -187,4 +187,19 @@ class BatchService(
 
         return firstFoundBatch
     }
+
+    private fun missingAnswerFromExpert(
+        answers: List<Answer>,
+        targetExpertAnswerCount: Int
+    ) = answers.filter { it.isFromExpert() }.size >= targetExpertAnswerCount
+
+    private fun missingAnswerFromAnyone(
+        answers: List<Answer>,
+        targetAnswerCount: Int
+    ) = answers.size < targetAnswerCount
+
+    private fun notAnsweredByUser(
+        answers: List<Answer>,
+        userId: Long
+    ) = !answers.any { it.user?.id == userId }
 }
