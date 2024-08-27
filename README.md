@@ -68,7 +68,7 @@ Then run [provide_defaults](provide-defaults.sh) to create a `.env` that stores:
 - APP_URL_ROOTS
 - MYSQL_DATABASE
 - MYSQL_USERNAME _no default -> needs to be set_
-- MYSQL_PASSWORD _no default ->needs to be set_
+- MYSQL_PASSWORD _no default -> needs to be set_
 
 ### Add images
 The backend expects a folder structure with subfolders of images to operate on.
@@ -96,13 +96,15 @@ The content of `./src/main/resources/public/files/` is excluded from Git. So the
 --------`...`
 
 ### Build and run application
+- Make sure you're running JDK-version 21.
+- Build and run the application with maven 
+```bash
+source .env && ./mvnw spring-boot:run
+```
 
-
-## Project Structure/Architecture
-
-### Security
-
-### Endpoints/Controllers
-
-### Data model/Database
-
+By default, there are two users created when the backend is first started:
+```
+username: "admin" password: "LyVvnz1a"
+username: "testuser" password: "kDpRNnrI"
+```
+If you want to make the app available to others it would be a good idea to remove these default users from the database.
