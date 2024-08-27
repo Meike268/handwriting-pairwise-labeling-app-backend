@@ -2,23 +2,22 @@
 
 ## What is this project for?
 This is the Kotlin Spring backend of the Handwriting Labeling App.
-This app servers to collect labels on handwriting legibility from annotators.
+This app serves to collect labels on handwriting legibility from annotators.
 This project is part of research in the direction of automatic handwriting assessment.
-It was developed by Aaron Lukas Pieger and Erik Jonathan Schmidt as part of our Master Theis projects.
+It was developed by Aaron Lukas Pieger and Erik Jonathan Schmidt as part of our Master Thesis projects.
 
 ## Functionality of the Application
 This app was developed to carry out the data labeling for a handwriting legibility dataset.
 We collect scores from "very good" 1 to "very bad" 5 for four questions about the legibility of
 handwritten sentences.  
-This is application provides the REST API the [frontend web app](https://github.com/LukasPieger1/handwriting-labeling-app-frontend)  operates on.   
+This application provides the REST API the [frontend web app](https://github.com/LukasPieger1/handwriting-labeling-app-frontend) operates on.   
 
 ### User/Frontend Application endpoints
-- POST **"/users/login"** The backend provides an authentication endpoint that verifies users against user accounts saved in the project MySQL DB.
+- POST **/users/login** The backend provides an authentication endpoint that verifies users against user accounts saved in the project MySQL DB.
 - GET **/batch** Provides authenticated users with a batch of tasks `(sampleId, questionId)`. The backend sends the question and the images(samples) to annotate.
 - POST **/answers** Answer `(sampleId, questionId, userId, label)` is sent to the backend to persist new answer in the DB.
 - PUT **/answers** Answer `(sampleId, questionId, userId, label)` is sent to the backend to update existing answer in DB.
 - POST **/reports** Report `(sampleId, userId, message` is sent when report window of frontend is used.
-- 
 ### Admin operational endpoints
 The application provides endpoints to carry out different operational tasks with admin credentials.
 
@@ -27,7 +26,7 @@ The application provides endpoints to carry out different operational tasks with
 - GET **/config** Retrieve the current batch_service_config.
 - POST **/config** Update(overwrite) the batch_service_config. This changes the behaviour of the application.
 - GET **/answers** Export answer entries from the DB in json format.
-- DELETE **/answers/ofsample/{id}** Deletes all answers to questions about the give sample/image. 
+- DELETE **/answers/ofSample/{id}** Deletes all answers to questions about the give sample/image. 
 - GET **/reports** Get exports stored in DB.
 
 #### batch_service_config
@@ -50,13 +49,13 @@ To run the backend spring application
 4. Build and run
 
 ### Setup MySQL database
-By default the backend operates on a MySql database with name `handwriting_labeling_app`.  
+By default, the backend operates on a MySql database with name `handwriting_labeling_app`.  
 Refer to https://dev.mysql.com/doc/mysql-getting-started/en/ to set up MySQL on your machine.
 Once installed run MySQL `mysql.server start`.
-Login as root `mysql -u root -p`, Your terminal is now prefixed with `mysql` to denote your in the mysql CLI.
+Login as root `mysql -u root -p`. Your terminal is now prefixed with `mysql` to denote you're in the mysql CLI.
 Create the empty database `mysql> CREATE database handwriting_labeling_app;`.
 Verify mysql serves on the right port `mysql> SHOW GLOBAL VARIABLES LIKE 'PORT';`.
-By default the backend expects mysql on port `3306`.
+By default, the backend expects mysql on port `3306`.
 
 ### Setup project
 With the mysql database created we can initialize/setup the project.  
@@ -79,21 +78,27 @@ Images at:
 The content of `./src/main/resources/public/files/` is excluded from Git. So the folder structure needs to be created
 (or better the dataset folder is pasted in here).
 
--`./src/main/resources/public/files/`  
----`images/`  
------`examples/`  
--------`example1.png`  
--------`...`  
------`samples/`  
--------`others/`  
----------`some_image_of_handwriting.png`  
----------`...`  
-------`xai_sentences/`  
---------`1/`   
-----------`image_of_handwritten_sentence_nr_1`  
-----------`...`  
---------`2/`  
---------`...`
+```
+./src/main/resources/public/files/
+└── images
+    ├── examples
+    │    ├── example_image_letter_alignment.png
+    │    ├── example_image_letter_size_ad.png
+    │    ├── example_image_letter_size_rnh.png
+    │    └── example_image_overall_legibility.png
+    └── samples
+        └── xai_sentences
+            ├── 1
+            │    ├── <image1_sentence1_id>.png
+            │    ├── <image2_sentence1_id>.png
+            │    ├── ...
+            │    └── <imageN_sentence1_id>.png
+            ├── 2
+            │    ├── <image1_sentence2_id>.png
+            │    ├── ...
+            │    └── <imageN_sentence2_id>.png
+            └── ...
+```
 
 ### Build and run application
 - Make sure you're running JDK-version 21.
