@@ -1,0 +1,1 @@
+DELETE FROM `applicable_question` WHERE `question_id` = 4 AND `reference_sentence_id` = 6;
