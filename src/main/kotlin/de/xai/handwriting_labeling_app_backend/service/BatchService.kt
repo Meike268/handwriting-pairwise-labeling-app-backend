@@ -204,5 +204,5 @@ class BatchService(
     private fun missingAnswerFromExpert(
         answers: List<Answer>,
         targetExpertAnswerCount: Int
-    ) = answers.filter { it.isFromExpert() }.size >= targetExpertAnswerCount
+    ) = answers.filter { it.isFromExpert() }.size < targetExpertAnswerCount
 }
