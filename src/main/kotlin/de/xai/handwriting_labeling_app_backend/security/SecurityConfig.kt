@@ -38,6 +38,8 @@ class SecurityConfig (val env: Environment) {
                 authorize(HttpMethod.GET, "/reports", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/reports", authenticated)
 
+                authorize(HttpMethod.GET, "/samples", hasRole("ADMIN"))
+
                 authorize(HttpMethod.GET, "/config", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/config", hasRole("ADMIN"))
             }
