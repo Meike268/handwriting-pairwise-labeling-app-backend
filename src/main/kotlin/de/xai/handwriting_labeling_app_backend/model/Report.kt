@@ -13,8 +13,11 @@ class Report (
     @Column(name = "user_id")
     val userId: Long? = null,
 
-    @Column(name = "sample_id")
-    val sampleId: Long? = null,
+    @Column(name = "sample_id_1")
+    val sampleId1: Long? = null,
+
+    @Column(name = "sample_id_2")
+    val sampleId2: Long? = null,
 
     @Column(name = "question_id")
     val questionId: Long? = null,

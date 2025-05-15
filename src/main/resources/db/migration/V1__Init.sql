@@ -77,7 +77,8 @@ VALUES (1, 1), (2, 1), (3, 1),(4, 1),(6, 1),(7, 1),(8, 1),(9, 1),(10, 1),
 
 CREATE TABLE `answer` (
     `user_id` bigint NOT NULL,
-    `sample_id` bigint NOT NULL,
+    `sample_id_1` bigint NOT NULL,
+    `sample_id_2` bigint NOT NULL,
     `question_id` bigint NOT NULL,
     `score` tinyint NOT NULL,
     `submission_timestamp` timestamp NOT NULL ,
@@ -89,7 +90,8 @@ CREATE TABLE `answer` (
 CREATE TABLE `report` (
     `id` bigint NOT NULL AUTO_INCREMENT,
     `user_id`  bigint NOT NULL,
-    `sample_id`  bigint,
+    `sample_id_1`  bigint,
+    `sample_id_2`  bigint,
     `question_id` bigint,
     `message`  bigint NOT NULL,
     `submission_timestamp` timestamp NOT NULL,

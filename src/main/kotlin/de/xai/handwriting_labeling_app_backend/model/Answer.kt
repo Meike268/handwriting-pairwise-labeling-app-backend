@@ -35,7 +35,8 @@ class Answer(
 }
 
 data class AnswerId(
-    private val sampleId: Long? = null,
+    private val sampleId1: Long? = null,
+    private val sampleId2: Long? = null,
     private val question: Question? = null,
     private val user: User? = null
 ) : Serializable
