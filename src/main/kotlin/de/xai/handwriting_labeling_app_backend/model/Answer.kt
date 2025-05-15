@@ -14,8 +14,11 @@ class Answer(
     @ManyToOne
     var user: User? = null,
 
-    @Column(name = "sample_id")
-    var sampleId: Long? = null,
+    @Column(name = "sample_id_1")
+    var sampleId1: Long? = null,
+
+    @Column(name = "sample_id_2")
+    var sampleId2: Long? = null,
 
     @JoinColumn(name = "question_id", referencedColumnName = "id")
     @Id

@@ -12,3 +12,15 @@ class TaskService(
 
     fun findAll(): List<Task> = tasks
 }
+
+/**
+Current functionality:
+ * Goes over all samples
+ * Checks if sample has associated referenceSentence
+ * Checks if associated referenceSentence has applicable Questions
+ * Creates a new task for each question and the associated sample -> Task(sample, question)
+
+Adjustments:
+* Each task should contain two randomly paired samples (based on some sorting algorithm --> ToDo)
+* We need to decide on a subset of samples to be annotated by specific annotators and those should be excluded to the others
+ * */
