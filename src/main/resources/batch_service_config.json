@@ -1,0 +1,19 @@
+{
+   "samplesOrigin": "xai_sentences",
+   "batchSize": 10,
+   "targetExpertAnswerCount": 1,
+   "targetAnswerCount": 3,
+   "prioritizedReferenceSentences": [
+     {
+       "referenceSentencesId": 1,
+       "priority": 1
+     }
+   ],
+   "prioritizedQuestions": [
+     {
+       "questionId": 1,
+       "priority": 1
+     }
+   ]
+ }
+
