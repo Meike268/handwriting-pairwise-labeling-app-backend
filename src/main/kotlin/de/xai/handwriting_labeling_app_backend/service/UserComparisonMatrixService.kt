@@ -11,31 +11,51 @@ class UserComparisonMatrixService(
 ) {
     private val objectMapper = jacksonObjectMapper()
 
-    fun getMatrixForUser(user: User, size: Int): Array<IntArray> {
+    fun getMatrixForUser(user: User, size: Int): Pair<Array<IntArray>, List<Long>> {
         val entity = matrixRepo.findByUser(user)
         return if (entity != null) {
-            objectMapper.readValue(entity.matrixJson)
+            val matrix = objectMapper.readValue(entity.matrixJson)
+            val sampleIds = objectMapper.readValue<List<Long>>(entity.sampleIdsJson)
+            Pair(matrix, sampleIds)
         } else {
             val emptyMatrix = Array(size) { IntArray(size) }
-            saveMatrixForUser(user, emptyMatrix)
-            emptyMatrix
+            saveMatrixForUser(user, emptyMatrix, listOf()) // Empty sample list for now
+            Pair(emptyMatrix, listOf())
         }
     }
 
-    fun saveMatrixForUser(user: User, matrix: Array<IntArray>) {
+
+    fun saveMatrixForUser(user: User, matrix: Array<IntArray>, samples: List<Sample>) {
         val json = objectMapper.writeValueAsString(matrix)
+
+        // Get the sorted sample IDs, which correspond to matrix indices
+        val sampleIds = samples.map { it.id }
+        val sampleIdsJson = objectMapper.writeValueAsString(sampleIds)
+
         val existing = matrixRepo.findByUser(user)
         if (existing != null) {
             existing.matrixJson = json
+            existing.sampleIdsJson = sampleIdsJson
             matrixRepo.save(existing)
         } else {
-            matrixRepo.save(UserComparisonMatrix(user = user, matrixJson = json))
+            matrixRepo.save(UserComparisonMatrix(user = user, matrixJson = json, sampleIdsJson = sampleIdsJson))
         }
     }
 
+
     fun recordComparison(user: User, winnerIdx: Int, loserIdx: Int, size: Int) {
-        val matrix = getMatrixForUser(user, size)
+        val (matrix, sampleIds) = getMatrixForUser(user, size)
+
+        // Map matrix indices to sample IDs
+        val winnerSampleId = sampleIds[winnerIdx]
+        val loserSampleId = sampleIds[loserIdx]
+
+        // Logic to update the matrix with winner and loser indices
         matrix[winnerIdx][loserIdx] += 1
-        saveMatrixForUser(user, matrix)
+        saveMatrixForUser(user, matrix, fetchSamplesByIds(sampleIds)) // Fetch samples by IDs and save updated matrix
+    }
+    
+    fun fetchSamplesByIds(sampleIds: List<Long>): List<Sample> {
+        return sampleRepository.findAllById(sampleIds)
     }
 }
