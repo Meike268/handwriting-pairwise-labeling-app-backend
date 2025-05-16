@@ -17,4 +17,8 @@ class UserComparisonMatrix(
     @Lob
     @Column(name = "matrix_json", nullable = false)
     var matrixJson: String
+
+    @Column(name = "sample_ids_json")
+    var sampleIdsJson: String // This will store the sample IDs in the order corresponding to matrix indices
+
 )
