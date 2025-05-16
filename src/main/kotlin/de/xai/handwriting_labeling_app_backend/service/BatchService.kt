@@ -104,97 +104,141 @@ class BatchService(
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>,
         excludedTasks: Map<Long, List<Long>>
     ): TaskBatchInfoBody? {
-        // get questions and reference sentence that are stored in DB
-        val questionPriorities = possiblePrioritizedQuestions.map { prioritizedQuestion ->
-            prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId)
-                .getOrElse {
-                    throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
-                }
+        val user = userRepository.findById(userId).orElseThrow {
+            IllegalArgumentException("User with ID $userId not found.")
         }
-
-        val sentencePriorities = possiblePrioritizedSentences.map { prioritizedSentence ->
-            prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId)
-                .getOrElse {
-                    throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
-                }
-        }
-        val questionAndSentencePriorities = sentencePriorities.flatMap {
-            (sentencePrio, sentence) -> questionPriorities.map {
-            (questionPrio, question) -> Pair(question, sentence) to questionPrio.priority + sentencePrio.priority }
-        }.shuffled().sortedBy { it.second }
 
         val submittedAnswersCount = answerRepository.findByUserId(userId).size
         var pendingAnswersCount = 0
 
+        val availableTasks = taskService.findAll(user)
+
+        // Commented out: Prioritization logic
+    //    val questionPriorities = possiblePrioritizedQuestions.map { prioritizedQuestion ->
+    //        prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId)
+    //            .getOrElse {
+    //                throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
+    //            }
+    //    }
+    //
+    //    val sentencePriorities = possiblePrioritizedSentences.map { prioritizedSentence ->
+    //        prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId)
+    //            .getOrElse {
+    //                throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
+    //            }
+    //    }
+    //
+    //    val questionAndSentencePriorities = sentencePriorities.flatMap { (sentencePrio, sentence) ->
+    //        questionPriorities.map { (questionPrio, question) ->
+    //            Pair(question, sentence) to questionPrio.priority + sentencePrio.priority
+    //        }
+    //    }.shuffled().sortedBy { it.second }
+
         var firstFoundBatch: TaskBatchInfoBody? = null
-        for ((questionAndSentence, _) in questionAndSentencePriorities) {
-            val (question, sentence) = questionAndSentence
-            if (question !in sentence.applicableQuestions!!) {
-                // question not applicable to sentence, continue with next sentence
+
+        // Commented out: Full priority-based loop
+    //    for ((questionAndSentence, _) in questionAndSentencePriorities) {
+    //        val (question, sentence) = questionAndSentence
+    //        if (question !in sentence.applicableQuestions!!) {
+    //            continue
+    //        }
+    //
+    //        val questionAnswers = answerRepository.findAllByQuestionId(question.id!!)
+    //
+    //        val availableTasks = taskService.findAll()
+    //            .filter {
+    //                it.question.id == question.id
+    //                        && it.sample1.referenceSentence?.id == sentence.id
+    //                        && it.sample2.referenceSentence?.id == sentence.id
+    //                        && excludedTasks[question.id]?.contains(it.sample1.id) != true
+    //                        && excludedTasks[question.id]?.contains(it.sample2.id) != true
+    //            }
+    //            .map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
+    //            .filter { (_, answersOfTask) ->
+    //                notAnsweredByUser(answersOfTask, userId)
+    //                        && (missingAnswerFromAnyone(answersOfTask, targetAnswerCount)
+    //                        || (forExpert && missingAnswerFromExpert(answersOfTask, targetExpertAnswerCount)))
+    //            }
+    //
+    //        pendingAnswersCount += availableTasks.size
+    //
+    //        if (firstFoundBatch != null || availableTasks.isEmpty()) {
+    //            continue
+    //        }
+    //
+    //        val batchTasks = availableTasks
+    //            .shuffled()
+    //            .sortedBy { (_, answers) -> answers.size }
+    //            .sortedBy { (_, answers) -> if (forExpert) min(targetExpertAnswerCount, answers.filter { it.isFromExpert() }.size) else null }
+    //            .take(batchSize)
+    //            .map { (task, _) ->
+    //                Pair(SampleInfoBody.fromSample(task.sample1), SampleInfoBody.fromSample(task.sample2))
+    //            }
+    //
+    //        val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
+    //            ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
+    //
+    //        firstFoundBatch = TaskBatchInfoBody(
+    //            userAnswerCounts = GetUserAnswerCountsBody(
+    //                submittedAnswersCount = submittedAnswersCount,
+    //                pendingAnswersCount = null
+    //            ),
+    //            question = question,
+    //            example = example,
+    //            referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
+    //            samplePairs = batchTasks
+    //        )
+    //    }
+
+        // New simplified logic using ASAP-based task list directly
+        val groupedByQuestionAndSentence = availableTasks.groupBy { Triple(it.question, it.sample1.referenceSentence, it.sample2.referenceSentence) }
+
+        for ((key, tasks) in groupedByQuestionAndSentence) {
+            val (question, sentence1, sentence2) = key
+            val sentence = sentence1 // assume both are same
+
+            if (sentence == null || question !in sentence.applicableQuestions ?: emptyList()) {
                 continue
             }
 
-            val questionAnswers = answerRepository.findAllByQuestionId(question.id!!)
+            pendingAnswersCount += tasks.size
 
-            // All tasks with their corresponding answers that are available to be answered by the user
-            // That means the user did not answer yet and the target number of answers is not fulfilled.
-            val availableTasks = taskService.findAll()
-                .filter {
-                    it.question.id == question.id
-                    && it.sample.referenceSentence?.id == sentence.id // Also filters non-xaiSentence Samples
-                    && excludedTasks[question.id]?.contains(it.sample.id) != true
-                }
-                // Gather corresponding answers
-                .map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
-                // Only keep tasks that: 1) the user has not answered yet and 2) are missing answers to satisfy targetAnswerCount/targetExpertAnswerCount
-                // Note, that this implementation can select targetAnswerCount + targetExpertAnswerCount answers for the
-                // same sample when at first tAC users answer the task and them tEAC experts give an answer.
-                .filter { (_, answersOfTask) ->
-                    notAnsweredByUser(answersOfTask, userId)
-                    && (missingAnswerFromAnyone(answersOfTask, targetAnswerCount)
-                            || (forExpert && missingAnswerFromExpert(answersOfTask, targetExpertAnswerCount)))
-                }
-            pendingAnswersCount += availableTasks.size
-
-            if (firstFoundBatch != null || availableTasks.isEmpty()) {
-                // the user answered all samples for this sentence and question, none pending
-                // OR
-                // the batch for the user is already found. We only iterate the questions and sentences further to
-                // count pending answers of the user
+            if (firstFoundBatch != null || tasks.isEmpty()) {
                 continue
             }
 
-            val batchSamples = availableTasks
-                .shuffled()
-                .sortedBy { (_, answers) -> answers.size }
-                .sortedBy { (_, answers) -> if (forExpert) min(targetExpertAnswerCount, answers.filter {it.isFromExpert() }.size) else null }
+            val batchTasks = tasks
                 .take(batchSize)
-                .map { (task, _) -> task.sample }
+                .map { task ->
+                    Pair(SampleInfoBody.fromSample(task.sample1), SampleInfoBody.fromSample(task.sample2))
+                }
 
             val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
                 ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
+
             firstFoundBatch = TaskBatchInfoBody(
-                question = question,
-                example = example,
-                referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
-                samples = batchSamples.map { SampleInfoBody.fromSample(it) },
                 userAnswerCounts = GetUserAnswerCountsBody(
                     submittedAnswersCount = submittedAnswersCount,
                     pendingAnswersCount = null
-                )
+                ),
+                question = question,
+                example = example,
+                referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
+                samplePairs = batchTasks
             )
         }
-        // now we iterated all feasible combinations of question and sentence and counted pending answers for this user
+
         firstFoundBatch?.userAnswerCounts?.pendingAnswersCount = pendingAnswersCount
 
         return firstFoundBatch
     }
 
 
-    private fun notAnsweredByUser(
-        answers: List<Answer>,
-        userId: Long
-    ) = !answers.any { it.user?.id == userId }
+
+    private fun notAnsweredByUser(answers: List<Answer>, userId: Long): Boolean {
+    return answers.none { it.user?.id == userId }
+    }
+
 
     private fun missingAnswerFromAnyone(
         answers: List<Answer>,
