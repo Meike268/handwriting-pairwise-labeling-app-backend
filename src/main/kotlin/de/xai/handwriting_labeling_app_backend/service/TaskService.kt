@@ -14,6 +14,7 @@ class TaskService(
 ) {
     fun findAll(user: User): List<Task> {
         val samples = sampleRepository.findAll()
+            .sortedBy { it.id }
             .filter { it.referenceSentence?.applicableQuestions?.isNotEmpty() == true }
 
         val matrix = matrixService.getMatrixForUser(user, samples.size)
