@@ -2,15 +2,39 @@ package de.xai.handwriting_labeling_app_backend.service
 
 import de.xai.handwriting_labeling_app_backend.model.Task
 import de.xai.handwriting_labeling_app_backend.repository.SampleRepository
+import de.xai.handwriting_labeling_app_backend.repository.UserComparisonMatrixServiceRepository
 import org.springframework.stereotype.Service
+
 
 @Service
 class TaskService(
-    sampleRepository: SampleRepository,
+    private val sampleRepository: SampleRepository,
+    private val asapClient: AsapClient,
+    private val matrixService: UserComparisonMatrixService
 ) {
-    private val tasks: List<Task> = sampleRepository.findAll().flatMap { sample -> sample.referenceSentence?.applicableQuestions?.map { question -> Task(sample, question) } ?: listOf() }
+    fun findAll(user: User): List<Task> {
+        val samples = sampleRepository.findAll()
+            .filter { it.referenceSentence?.applicableQuestions?.isNotEmpty() == true }
 
-    fun findAll(): List<Task> = tasks
+        val matrix = matrixService.getMatrixForUser(user, samples.size)
+
+        val pairsToCompare = asapClient.getPairsToCompare(matrix)
+
+        if(maxEIG < 0.5) {
+            // All comparisons are low-value - stop requesting more
+            return emptyList() // TODO: tell frontend
+        }
+
+        return pairsToCompare.flatMap { (i, j) ->
+            val sample1 = samples[i]
+            val sample2 = samples[j]
+            sample1.referenceSentence!!.applicableQuestions.map { question ->
+                Task(sample1, sample2, question)
+            }
+        }
+    }
+}
+
 }
 
 /**
