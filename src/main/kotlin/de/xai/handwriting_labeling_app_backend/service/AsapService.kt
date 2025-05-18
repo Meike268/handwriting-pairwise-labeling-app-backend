@@ -8,7 +8,7 @@ class AsapClient {
     private val objectMapper = jacksonObjectMapper()
 
     fun getPairsToCompare(matrix: Array<IntArray>): Pair<List<Pair<Int, Int>>, Double> {
-        val pythonScriptPath = "path/to/asap_runner.py"
+        val pythonScriptPath = "src/main/kotlin/de/xai/handwriting_labeling_app_backend/utils/asap_runner.py"
 
         val inputJson = objectMapper.writeValueAsString(mapOf("matrix" to matrix))
         val process = ProcessBuilder("python", pythonScriptPath)
