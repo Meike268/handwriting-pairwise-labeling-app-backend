@@ -7,6 +7,7 @@ data class TaskBatchInfoBody(
     val userAnswerCounts: GetUserAnswerCountsBody,
     val question: Question,
     val example: Example,
-    val referenceSentence: ReferenceSentenceInfoBody,
-    val samples: List<SampleInfoBody>
-) 
+    val referenceSentence1: ReferenceSentenceInfoBody,
+    val referenceSentence2: ReferenceSentenceInfoBody,
+    val samplePairs: List<Pair<SampleInfoBody, SampleInfoBody>>
+)
