@@ -15,7 +15,7 @@ class TaskService(
     fun findAll(user: User): List<Task> {
         val samples = sampleRepository.findAll()
             .sortedBy { it.id }
-            .filter { it.referenceSentence?.applicableQuestions?.isNotEmpty() == true }
+            .filter { it.referenceSentence?.isQuestion1Applicable() == true } // TODO: change to only question 1
 
         val matrix = matrixService.getMatrixForUser(user, samples.size)
 
@@ -29,10 +29,19 @@ class TaskService(
         return pairsToCompare.flatMap { (i, j) ->
             val sample1 = samples[i]
             val sample2 = samples[j]
-            sample1.referenceSentence!!.applicableQuestions.map { question ->
-                Task(sample1, sample2, question)
+
+            // Check if Question ID 1 is applicable to both sample1's and sample2's reference sentence
+            if (sample1.referenceSentence?.isQuestion1Applicable() == true && sample2.referenceSentence?.isQuestion1Applicable() == true) {
+                // If Question ID 1 is applicable to both samples, create tasks for applicable questions
+                sample1.referenceSentence!!.applicableQuestions.map { question ->
+                    Task(sample1, sample2, question)
+                }
+            } else {
+                // If Question ID 1 is not applicable to either sample, return an empty list (or handle differently)
+                emptyList() // TODO: tell frontend
             }
         }
+
     }
 }
 
