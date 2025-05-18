@@ -21,4 +21,9 @@ class ReferenceSentence(
         inverseJoinColumns = [JoinColumn(name = "question_id", referencedColumnName = "id")]
     )
     var applicableQuestions: Set<Question>? = null
-)
+) {
+    // Method to check if Question ID 1 is applicable
+    fun isQuestion1Applicable(): Boolean {
+        return applicableQuestions?.any { it.id == 1 } == true
+    }
+}
