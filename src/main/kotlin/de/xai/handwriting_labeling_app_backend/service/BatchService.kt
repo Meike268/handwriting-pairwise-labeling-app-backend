@@ -195,9 +195,8 @@ class BatchService(
 
         for ((key, tasks) in groupedByQuestionAndSentence) {
             val (question, sentence1, sentence2) = key
-            val sentence = sentence1 // assume both are same
 
-            if (sentence == null || question !in sentence.applicableQuestions ?: emptyList()) {
+            if (sentence1 == null || sentence2 == null || sentence1?.isQuestion1Applicable() != true || sentence2?.isQuestion1Applicable() != true) {
                 continue
             }
 
@@ -208,6 +207,7 @@ class BatchService(
             }
 
             val batchTasks = tasks
+                .shuffled()
                 .take(batchSize)
                 .map { task ->
                     Pair(SampleInfoBody.fromSample(task.sample1), SampleInfoBody.fromSample(task.sample2))
@@ -223,7 +223,8 @@ class BatchService(
                 ),
                 question = question,
                 example = example,
-                referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
+                referenceSentence1 = ReferenceSentenceInfoBody.fromReferenceSentence(sentence1),
+                referenceSentence2 = ReferenceSentenceInfoBody.fromReferenceSentence(sentence2),
                 samplePairs = batchTasks
             )
         }
