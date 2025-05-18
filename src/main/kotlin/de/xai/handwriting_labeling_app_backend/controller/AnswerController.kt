@@ -26,7 +26,8 @@ class AnswerController(
         return ResponseEntity.ok(
             answerService.createOrUpdate(
                 principal.name,
-                answer.sampleId,
+                answer.sampleId1,
+                answer.sampleId2,
                 answer.questionId,
                 answer.score,
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(answer.submissionTimestamp), TimeZone.getDefault().toZoneId())
@@ -40,7 +41,8 @@ class AnswerController(
 
         return ResponseEntity.ok(answerService.createOrUpdate(
             principal.name,
-            answer.sampleId,
+            answer.sampleId1,
+            answer.sampleId2,
             answer.questionId,
             answer.score,
             LocalDateTime.ofInstant(Instant.ofEpochMilli(answer.submissionTimestamp), TimeZone.getDefault().toZoneId())

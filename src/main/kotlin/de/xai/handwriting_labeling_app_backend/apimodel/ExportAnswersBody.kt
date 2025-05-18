@@ -19,8 +19,10 @@ data class XAiExportAnswersMetaData(
 
 data class XAiExportAnswerInfoBody(
     val userId: Long,
-    val sampleId: Long,
-    val referenceSentenceId: Long,
+    val sampleId1: Long,
+    val sampleId2: Long,
+    val referenceSentenceId1: Long,
+    val referenceSentenceId2: Long,
     val questionId: Long,
     val score: Int,
     val submissionTimestamp: String
@@ -28,6 +30,7 @@ data class XAiExportAnswerInfoBody(
 
 data class OthersExportAnswersBody(
     val userId: Long,
-    val sampleId: Long,
+    val sampleId1: Long,
+    val sampleId2: Long,
     val score: Int
 )

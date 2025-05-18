@@ -23,7 +23,8 @@ class AnswerService(
 
     fun createOrUpdate(
         username: String,
-        sampleId: Long,
+        sampleId1: Long,
+        sampleId2: Long,
         questionId: Long,
         score: Int,
         submissionTimestamp: LocalDateTime
@@ -31,7 +32,8 @@ class AnswerService(
         return answerRepository.save(
             Answer(
                 user = userRepository.findByUsername(username)!!,
-                sampleId = sampleId,
+                sampleId1 = sampleId1,
+                sampleId2 = sampleId2,
                 question = questionRepository.findById(questionId).get(),
                 score = score,
                 submissionTimestamp = submissionTimestamp
@@ -71,25 +73,43 @@ class AnswerService(
         val allXaiSamples = sampleRepository.findAllInDirectoryRecursive(xaiSentencesDirectory)
 
         return answerRepository.findAll().mapNotNull { answer ->
-            // search sample of this answer in samples/xai_sentences and read ref sent id from it
-            val referenceSentenceId = answer.sampleId?.let { sampleId ->
-                allXaiSamples.find { sample ->
-                    sample.id == sampleId
-                }?.referenceSentence?.id
-            } ?: return@mapNotNull null //the sample this answer refers to is not in xai directory
+            // Find two samples based on sampleId1 and sampleId2
+            val sample1 = answer.sampleId1?.let { sampleId1 ->
+                allXaiSamples.find { sample -> sample.id == sampleId1 }
+            }
+            val sample2 = answer.sampleId2?.let { sampleId2 ->
+                allXaiSamples.find { sample -> sample.id == sampleId2 }
+            }
+
+            // If either sample is not found, return null (skip this answer)
+            if (sample1 == null || sample2 == null) {
+                return@mapNotNull null
+            }
+
+            // Retrieve the reference sentence IDs from both samples
+            val referenceSentenceId1 = sample1.referenceSentence?.id
+            val referenceSentenceId2 = sample2.referenceSentence?.id
+
+            // If either sample is missing a reference sentence, skip this answer
+            if (referenceSentenceId1 == null || referenceSentenceId2 == null) {
+                return@mapNotNull null
+            }
 
             safeLet(
                 answer.user?.id,
-                answer.sampleId,
+                answer.sampleId1,
+                answer.sampleId2,
                 answer.question?.id,
                 answer.score,
                 answer.submissionTimestamp
-            ) { userId, sampleId, questionId, score, time ->
+            ) { userId, sampleId1, sampleId2, questionId, score, time ->
 
                 XAiExportAnswerInfoBody(
                     userId = userId,
-                    sampleId = sampleId,
-                    referenceSentenceId = referenceSentenceId,
+                    sampleId1 = sampleId1,
+                    sampleId2 = sampleId2,
+                    referenceSentenceId1 = referenceSentenceId1,
+                    referenceSentenceId2 = referenceSentenceId2,
                     questionId = questionId,
                     score = score,
                     submissionTimestamp = time.toString()
@@ -122,22 +142,32 @@ class AnswerService(
         val allOthersSamples = sampleRepository.findAllInDirectoryRecursive(othersDirectory)
 
         return answerRepository.findAll().mapNotNull { answer ->
-            // search sample of this answer in samples/others
-            answer.sampleId?.let { sampleId ->
-                allOthersSamples.find { sample ->
-                    sample.id == sampleId
-                }
-            } ?: return@mapNotNull null //the sample this answer refers to is not in others directory
+            // Find the first sample using sampleId1
+            val sample1 = answer.sampleId1?.let { sampleId1 ->
+                allOthersSamples.find { sample -> sample.id == sampleId1 }
+            }
+
+            // Find the second sample using secondarySampleId or other logic (adjust this as needed)
+            val sample2 = answer.sampleId2?.let { sampleId2 ->
+                allOthersSamples.find { sample -> sample.id == sampleId2 }
+            }
+
+            // If either sample is not found, return null (skip this answer)
+            if (sample1 == null || sample2 == null) {
+                return@mapNotNull null
+            }
 
             safeLet(
                 answer.user?.id,
-                answer.sampleId,
+                answer.sampleId1,
+                answer.sampleId2,
                 answer.score
-            ) { userId, sampleId, score ->
+            ) { userId, sampleId1, sampleId2, score ->
 
                 OthersExportAnswersBody(
                     userId = userId,
-                    sampleId = sampleId,
+                    sampleId1 = sampleId1,
+                    sampleId2 = sampleId2
                     score = score
                 )
             }

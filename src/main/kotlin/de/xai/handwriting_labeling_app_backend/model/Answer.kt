@@ -26,7 +26,7 @@ class Answer(
     var question: Question? = null,
 
     @Column(name = "score")
-    var score: Int? = null,
+    var score: Int? = null, // 1 if sample 1 wins; 0 if sample 2 wins
 
     @Column(name = "submission_timestamp")
     val submissionTimestamp: LocalDateTime? = null,
