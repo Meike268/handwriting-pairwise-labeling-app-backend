@@ -43,7 +43,7 @@ class SampleRepository(
             throw FileNotFoundException()
         }
 
-        val sampleId = file.name.replace(".png", "").toLong()
+        val sampleId = file.name.replace(".png", "").toLong() // set sample ID to name of file
         return if (file.parentFile.parentFile == xaiSentencesDirectory)
             Sample(sampleId, referenceSentenceRepository.findById(file.parentFile.name.toLong()).get())
         else

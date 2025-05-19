@@ -24,6 +24,6 @@ class ReferenceSentence(
 ) {
     // Method to check if Question ID 1 is applicable
     fun isQuestion1Applicable(): Boolean {
-        return applicableQuestions?.any { it.id == 1 } == true
+        return applicableQuestions?.any { it.id == 1L } == true
     }
 }
