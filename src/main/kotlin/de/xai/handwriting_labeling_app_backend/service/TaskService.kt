@@ -9,20 +9,23 @@ import org.springframework.stereotype.Service
 @Service
 class TaskService(
     private val sampleRepository: SampleRepository,
-    private val asapClient: AsapClient,
+    private val asapService: AsapService,
     private val matrixService: UserComparisonMatrixService
 ) {
     fun findAll(user: User): List<Task> {
+        // get all samples sorted by ID and filtered by applicability of question 1
         val samples = sampleRepository.findAll()
             .sortedBy { it.id }
-            .filter { it.referenceSentence?.isQuestion1Applicable() == true } // TODO: change to only question 1
+            .filter { it.referenceSentence?.isQuestion1Applicable() == true }
 
+        // get comparison matrix for user from db
         val matrix = matrixService.getMatrixForUser(user, samples.size)
 
-        val pairsToCompare = asapClient.getPairsToCompare(matrix)
+        // get recommended pairsToCompare and maxEIG from asapService based on comparison matrix
+        val (pairsToCompare, maxEIG) = asapService.getPairsToCompare(matrix)
 
         if(maxEIG < 0.5) {
-            // All comparisons are low-value - stop requesting more
+            // All comparisons offer low additional value -> stop requesting more
             return emptyList() // TODO: tell frontend
         }
 
@@ -32,12 +35,15 @@ class TaskService(
 
             // Check if Question ID 1 is applicable to both sample1's and sample2's reference sentence
             if (sample1.referenceSentence?.isQuestion1Applicable() == true && sample2.referenceSentence?.isQuestion1Applicable() == true) {
-                // If Question ID 1 is applicable to both samples, create tasks for applicable questions
-                sample1.referenceSentence!!.applicableQuestions.map { question ->
-                    Task(sample1, sample2, question)
-                }
+
+                // If Question ID 1 is applicable to both samples, create tasks for question 1
+                sample1.referenceSentence!!.applicableQuestions
+                    ?.firstOrNull { it.id == 1L }
+                    ?.let { question -> listOf(Task(sample1, sample2, question)) }
+                    ?: emptyList()
+
             } else {
-                // If Question ID 1 is not applicable to either sample, return an empty list (or handle differently)
+                // If Question ID 1 is not applicable to either sample, return an empty list
                 emptyList() // TODO: tell frontend
             }
         }
