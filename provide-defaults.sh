@@ -22,21 +22,11 @@ if [ ! -f "$CONFIG_FILE" ]; then
   echo \
 "{
    \"samplesOrigin\": \"xai_sentences\",
-   \"batchSize\": 10,
-   \"targetExpertAnswerCount\": 1,
-   \"targetAnswerCount\": 3,
-   \"prioritizedReferenceSentences\": [
-     {
-       \"referenceSentencesId\": 1,
-       \"priority\": 1
-     }
-   ],
-   \"prioritizedQuestions\": [
-     {
-       \"questionId\": 1,
-       \"priority\": 1
-     }
-   ]
+   \"batchSize\": 99,
+   \"targetExpertAnswerCount\": 0,
+   \"targetAnswerCount\": 1,
+   \"prioritizedReferenceSentences\": [],
+   \"prioritizedQuestions\": []
  }
 " \
 > "$CONFIG_FILE"
