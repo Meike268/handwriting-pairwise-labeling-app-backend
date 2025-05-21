@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrElse
 import kotlin.math.min
 
+
+
+
 @Service
 class BatchService(
     private val questionRepository: QuestionRepository,
@@ -20,13 +23,14 @@ class BatchService(
     private val referenceSentenceRepository: ReferenceSentenceRepository,
     private val answerRepository: AnswerRepository,
     private val configHandler: BatchConfigHandler,
-    private val taskService: TaskService
+    private val taskService: TaskService,
+    private val userBatchLogRepository: UserBatchLogRepository
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     fun generateBatch(
         username: String,
-        excludedTasks: Map<Long, List<Long>> = emptyMap() // {questionId: List<sampleId>}
+
     ): GetBatchResponseBody {
         /**val allSamples = sampleRepository.findAll()
         for (sample in allSamples) {
@@ -39,6 +43,18 @@ class BatchService(
         submissionTimestamp = LocalDateTime.now()
         )
         }*/
+
+        val user = userRepository.findByUsername(username)
+            ?: throw IllegalArgumentException("No user found with username: $username")
+
+        val batchLimit = 25  // Set your limit here
+        val userBatchCount = userBatchLogRepository.countByUserId(user.id!!)
+
+        if (userBatchCount >= batchLimit) {
+            logger.info("User ${user.username} reached batch limit ($batchLimit).")
+            return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
+        }
+
 
         val config = configHandler.readBatchServiceConfig()
 
@@ -55,7 +71,7 @@ class BatchService(
                 forExpert = user.isExpert(),
                 possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
                 possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList(),
-                excludedTasks = excludedTasks
+                // excludedTasks = excludedTasks
             )
         else
             TODO()
@@ -63,6 +79,9 @@ class BatchService(
         if (taskBatchBody == null) {
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
         }
+
+        userBatchLogRepository.save(UserBatchLog(user = user))
+
         return GetBatchResponseBody(
             state = GET_BATCH_RESPONSE_STATE_SUCCESS,
             body = taskBatchBody
@@ -102,7 +121,6 @@ class BatchService(
         forExpert: Boolean,
         possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>,
-        excludedTasks: Map<Long, List<Long>>
     ): TaskBatchInfoBody? {
         val user = userRepository.findById(userId).orElseThrow {
             IllegalArgumentException("User with ID $userId not found.")
@@ -223,8 +241,6 @@ class BatchService(
                 ),
                 question = question,
                 example = example,
-                referenceSentence1 = ReferenceSentenceInfoBody.fromReferenceSentence(sentence1),
-                referenceSentence2 = ReferenceSentenceInfoBody.fromReferenceSentence(sentence2),
                 samplePairs = batchTasks
             )
         }
