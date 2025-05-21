@@ -18,6 +18,7 @@ class AnswerService(
     private val answerRepository: AnswerRepository,
     private val referenceSentenceRepository: ReferenceSentenceRepository,
     private val sampleRepository: SampleRepository,
+    private val userComparisonMatrixService: UserComparisonMatrixService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -29,12 +30,22 @@ class AnswerService(
         score: Int,
         submissionTimestamp: LocalDateTime
     ): Answer {
+        val user = userRepository.findByUsername(username)!!
+        val question = questionRepository.findById(questionId).get()
+
+        // record result in userComparisonMatrix
+        if (score != 0) {
+            val winnerId = if (score == 1) sampleId1 else sampleId2
+            val loserId = if (score == 1)  sampleId2 else sampleId1
+            recordComparison(user, winnerId, loserId, size = 99)
+        }
+
         return answerRepository.save(
             Answer(
-                user = userRepository.findByUsername(username)!!,
+                user = user,
                 sampleId1 = sampleId1,
                 sampleId2 = sampleId2,
-                question = questionRepository.findById(questionId).get(),
+                question = question,
                 score = score,
                 submissionTimestamp = submissionTimestamp
             )

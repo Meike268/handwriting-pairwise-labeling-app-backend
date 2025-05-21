@@ -43,12 +43,11 @@ class UserComparisonMatrixService(
     }
 
 
-    fun recordComparison(user: User, winnerIdx: Int, loserIdx: Int, size: Int) {
+    fun recordComparison(user: User, winnerId: Long, loserId: Long, size: Int) {
         val (matrix, sampleIds) = getMatrixForUser(user, size)
 
-        // Map matrix indices to sample IDs
-        val winnerSampleId = sampleIds[winnerIdx]
-        val loserSampleId = sampleIds[loserIdx]
+        winnerIndex = sampleIds.indexOf(winnerId)
+        loserIndex = sampleIds.indexOf(loserId)
 
         // Logic to update the matrix with winner and loser indices
         matrix[winnerIdx][loserIdx] += 1
