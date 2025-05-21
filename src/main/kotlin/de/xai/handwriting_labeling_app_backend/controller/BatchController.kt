@@ -16,13 +16,7 @@ class BatchController(
     private val batchService: BatchService
 ) {
     @GetMapping
-    fun getRandomBatch(principal: Principal, @RequestParam("excludedTasks") excludedTasks: String): GetBatchResponseBody {
-        val excludedTasksMap: Map<Long, List<Long>> = ObjectMapper().readTree(excludedTasks)
-            .fields().asSequence().asIterable()
-            .associate {
-                it.key.toLong() to it.value.toList().map { it.asLong() }
-            }
-
-        return batchService.generateBatch(principal.name, excludedTasksMap)
+    fun getRandomBatch(principal: Principal): GetBatchResponseBody {
+        return batchService.generateBatch(principal.name)
     }
 }
