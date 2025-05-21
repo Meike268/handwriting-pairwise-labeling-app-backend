@@ -28,7 +28,8 @@ class ReportController(
         val savedReport = userRepository.findByUsername(principal.name)?.let { user ->
             val report = Report(
                 userId = user.id,
-                sampleId = body.sampleId,
+                sampleId1 = body.sampleId1,
+                sampleId2 = body.sampleId2,
                 questionId = body.questionId,
                 message = body.message,
                 submissionTimestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(body.submissionTimestamp), TimeZone.getDefault().toZoneId())
