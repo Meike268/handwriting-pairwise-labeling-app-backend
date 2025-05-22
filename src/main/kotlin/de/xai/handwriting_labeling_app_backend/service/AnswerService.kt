@@ -10,6 +10,8 @@ import de.xai.handwriting_labeling_app_backend.utils.safeLet
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import de.xai.handwriting_labeling_app_backend.service.UserComparisonMatrixService
+
 
 @Service
 class AnswerService(
@@ -37,7 +39,7 @@ class AnswerService(
         if (score != 0) {
             val winnerId = if (score == 1) sampleId1 else sampleId2
             val loserId = if (score == 1)  sampleId2 else sampleId1
-            recordComparison(user, winnerId, loserId, size = 99)
+            userComparisonMatrixService.recordComparison(user, winnerId, loserId, size = 99)
         }
 
         return answerRepository.save(
@@ -178,7 +180,7 @@ class AnswerService(
                 OthersExportAnswersBody(
                     userId = userId,
                     sampleId1 = sampleId1,
-                    sampleId2 = sampleId2
+                    sampleId2 = sampleId2,
                     score = score
                 )
             }

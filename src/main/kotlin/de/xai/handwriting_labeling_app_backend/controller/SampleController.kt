@@ -19,7 +19,7 @@ class SampleController(
         val reports = reportRepository.findAll()
         return sampleRepository.findAll()
             .map { sample: Sample ->
-                val associatedReports = reports.filter { it.sampleId == sample.id }
+                val associatedReports = reports.filter { it.sampleId1 == sample.id || it.sampleId2 == sample.id }
                 SampleInfoBody.fromSample(sample, associatedReports)
             }
     }

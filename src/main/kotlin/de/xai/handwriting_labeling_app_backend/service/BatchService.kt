@@ -46,6 +46,7 @@ class BatchService(
 
         val user = userRepository.findByUsername(username)
             ?: throw IllegalArgumentException("No user found with username: $username")
+        logger.info("Generating random batch for user $user")
 
         val batchLimit = 25  // Set your limit here
         val userBatchCount = userBatchLogRepository.countByUserId(user.id!!)
@@ -58,9 +59,6 @@ class BatchService(
 
         val config = configHandler.readBatchServiceConfig()
 
-        val user = userRepository.findByUsername(username)
-            ?: throw IllegalArgumentException("No user found with username: $username")
-        logger.info("Generating random batch for user $user")
 
         val taskBatchBody = if (config.samplesOrigin == XAI_SENTENCE_DIRECTORY_NAME)
             findXaiSentenceBatch(
