@@ -21,7 +21,7 @@ class TaskService(
             .filter { it.referenceSentence?.isQuestion1Applicable() == true }
 
         // get comparison matrix for user from db
-        val matrix = matrixService.getMatrixForUser(user, samples.size)
+        val (matrix, _) = matrixService.getMatrixForUser(user, samples.size)
 
         // get recommended pairsToCompare and maxEIG from asapService based on comparison matrix
         val (pairsToCompare, maxEIG) = asapService.getPairsToCompare(matrix)
@@ -53,7 +53,7 @@ class TaskService(
     }
 }
 
-}
+
 
 /**
 Current functionality:

@@ -6,6 +6,7 @@ import java.time.LocalDateTime
 
 
 @Entity
+@Table(name = "user_batch_log")
 data class UserBatchLog(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,

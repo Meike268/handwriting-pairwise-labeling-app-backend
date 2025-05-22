@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
+import com.fasterxml.jackson.core.type.TypeReference
 
 
 @Service
@@ -19,12 +20,22 @@ class UserComparisonMatrixService(
 
         val entity = matrixRepo.findByUser(user)
         return if (entity != null) {
-            val matrix = objectMapper.readValue(entity.matrixJson)
-            val sampleIds = objectMapper.readValue<List<Long>>(entity.sampleIdsJson)
+            // Deserialize the matrix JSON into Array<IntArray>
+            val matrix: Array<IntArray> = objectMapper.readValue(
+                entity.matrixJson,
+                object : TypeReference<Array<IntArray>>() {}
+            )
+
+            // Deserialize the sample IDs JSON into List<Long>
+            val sampleIds: List<Long> = objectMapper.readValue(
+                entity.sampleIdsJson,
+                object : TypeReference<List<Long>>() {}
+            )
+
             Pair(matrix, sampleIds)
         } else {
             val emptyMatrix = Array(size) { IntArray(size) }
-            saveMatrixForUser(user, emptyMatrix, listOf()) // Empty sample list for now
+            saveMatrixForUser(user, emptyMatrix, listOf())
             Pair(emptyMatrix, listOf())
         }
     }

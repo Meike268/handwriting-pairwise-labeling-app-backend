@@ -82,7 +82,7 @@ CREATE TABLE `answer` (
     `question_id` bigint NOT NULL,
     `score` tinyint NOT NULL,
     `submission_timestamp` timestamp NOT NULL ,
-    PRIMARY KEY (`user_id`, `sample_id`, `question_id`),
+    PRIMARY KEY (`user_id`, `sample_id_1`, `sample_id_2`, `question_id`),
     FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
     FOREIGN KEY (`question_id`) REFERENCES `question` (`id`)
 );
