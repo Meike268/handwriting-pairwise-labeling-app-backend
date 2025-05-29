@@ -32,14 +32,16 @@ class AnswerService(
         score: Int,
         submissionTimestamp: LocalDateTime
     ): Answer {
-        val user = userRepository.findByUsername(username)!!
+        val user = userRepository.findByUsername(username)
+            ?: throw IllegalArgumentException("No user found with username: $username")
+        logger.info("Generating random batch for user $user")
         val question = questionRepository.findById(questionId).get()
 
         // record result in userComparisonMatrix
         if (score != 0) {
             val winnerId = if (score == 1) sampleId1 else sampleId2
             val loserId = if (score == 1)  sampleId2 else sampleId1
-            userComparisonMatrixService.recordComparison(user, winnerId, loserId, size = 99)
+            userComparisonMatrixService.recordComparison(username, winnerId, loserId, size = 10)
         }
 
         return answerRepository.save(
@@ -193,19 +195,24 @@ class AnswerService(
 
 
     fun deleteAnswersOfSample(sampleId: Long): Boolean {
-        val answersToSample = answerRepository.findAllBySampleId(sampleId)
-        val answersToDeleteCount = answersToSample.size
-        logger.debug("Delete all ${answersToDeleteCount} answers that were give to sample with id: $sampleId.")
+        val answersToSample1 = answerRepository.findAllBySampleId1(sampleId)
+        val answersToSample2 = answerRepository.findAllBySampleId2(sampleId)
+        val allAnswers = (answersToSample1 + answersToSample2).distinct()
+
+        logger.debug("Deleting ${allAnswers.size} answers containing sample ID: $sampleId.")
+
         var deletedCount = 0
-        for (answer in answersToSample) {
+        for (answer in allAnswers) {
             try {
                 answerRepository.delete(answer)
                 deletedCount++
             } catch (e: Exception) {
-                logger.debug("Exception occurred while deleting {}: {}", answer, e.message)
+                logger.warn("Exception occurred while deleting answer for user=${answer.user?.id}, question=${answer.question?.id}: ${e.message}")
             }
         }
-        return answersToDeleteCount == deletedCount
+
+        return allAnswers.size == deletedCount
     }
+
 
 }

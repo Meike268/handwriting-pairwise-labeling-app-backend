@@ -12,16 +12,22 @@ import org.springframework.stereotype.Service
 class TaskService(
     private val sampleRepository: SampleRepository,
     private val asapService: AsapService,
-    private val matrixService: UserComparisonMatrixService
+    private val matrixService: UserComparisonMatrixService,
+    private val matrixRepository: UserComparisonMatrixRepository
 ) {
-    fun findAll(user: User): List<Task> {
+    fun findAll(
+        username: String,
+    ): List<Task> {
+
         // get all samples sorted by ID and filtered by applicability of question 1
         val samples = sampleRepository.findAll()
             .sortedBy { it.id }
             .filter { it.referenceSentence?.isQuestion1Applicable() == true }
+            .shuffled() // take out later
+            .take(10) // take out later
 
         // get comparison matrix for user from db
-        val (matrix, _) = matrixService.getMatrixForUser(user, samples.size)
+        val (matrix, _) = matrixService.getMatrixForUser(username, samples.size)
 
         // get recommended pairsToCompare and maxEIG from asapService based on comparison matrix
         val (pairsToCompare, maxEIG) = asapService.getPairsToCompare(matrix)
@@ -50,6 +56,7 @@ class TaskService(
             }
         }
 
+        //return emptyList<Task>()
     }
 }
 

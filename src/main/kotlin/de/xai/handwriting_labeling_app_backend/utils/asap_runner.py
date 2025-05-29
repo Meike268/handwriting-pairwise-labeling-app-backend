@@ -3,35 +3,42 @@ import json
 import numpy as np
 import asap_cpu
 
+
+
 def main():
+    try:
+        # read input data from kotlin
+        input_data = sys.stdin.read()
+        data = json.loads(input_data)
 
-    # read input data from kotlin
-    input_data = sys.stdin.read()
-    data = json.loads(input_data)
+        # prepare the matrix and get number of samples (N)
+        pwc_mat = np.array(data["matrix"])
+        N = pwc_mat.shape[0]
 
-    # prepare the matrix and get number of samples (N)
-    pwc_mat = np.array(data["matrix"])
-    N = pwc_mat.shape[0]
+        # run the ASAP algorithm
+        asap = asap_cpu.ASAP(N, selective_eig=True, approx=False)
+        inf_mat, pairs_to_compare = asap.run_asap(pwc_mat, mst_mode=True)
 
-    # run the ASAP algorithm
-    asap = asap_cpu.ASAP(N, selective_eig=True, approx=False)
-    inf_mat, pairs_to_compare = asap.run_asap(pwc_mat, mst_mode=True)
+        # Compute max EIG (ignoring -1s)
+        valid_eigs = inf_mat[inf_mat >= 0]
+        max_eig = float(valid_eigs.max()) if valid_eigs.size > 0 else 0.0
 
-    # Compute max EIG (ignoring -1s)
-    valid_eigs = inf_mat[inf_mat >= 0]
-    max_eig = float(valid_eigs.max()) if valid_eigs.size > 0 else 0.0
+        # output a list of index pairs and the max_eig
+        output = {
+            "pairs": [list(pair) for pair in pairs_to_compare],
+            "max_eig": max_eig
+        }
 
-    # output a list of index pairs and the max_eig
-    output = {
-        "pairs": [list(pair) for pair in pairs_to_compare],
-        "max_eig": max_eig
-    }
+        # serialize the dictionary to a JSON string
+        print(json.dumps(convert(output)))
 
-    # serialize the dictionary to a JSON string
-    print(json.dumps(convert(output)))
+        # flush output to standard output
+        sys.stdout.flush()
 
-    # flush output to standard output
-    sys.stdout.flush()
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+        sys.stdout.flush()
+        sys.exit(1)
 
 def convert(obj):
     if isinstance(obj, np.integer):

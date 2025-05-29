@@ -7,39 +7,56 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import java.util.concurrent.TimeUnit
 
 @Service
-class AsapService (
-    private val asapResponse: AsapResponse
-) {
+class AsapService {
+
+    private val objectMapper = jacksonObjectMapper()
+
     fun getPairsToCompare(matrix: Array<IntArray>): Pair<List<Pair<Int, Int>>, Double> {
         val pythonScriptPath = "src/main/kotlin/de/xai/handwriting_labeling_app_backend/utils/asap_runner.py"
 
-        val objectMapper = ObjectMapper()
-
-        // serialize the matrix into JSON
+        // serialize the matrix into JSON string
         val inputJson = objectMapper.writeValueAsString(mapOf("matrix" to matrix))
 
-        // start the python process
-        val process = ProcessBuilder("python", pythonScriptPath)
-            .redirectErrorStream(true)
-            .start()
+        val processBuilder = ProcessBuilder("python", pythonScriptPath)
+            .redirectErrorStream(true) // merge stdout and stderr
 
-        // send the serialized matrix to the Python script's standard input
-        process.outputStream.use {
-            it.write(inputJson.toByteArray())
-            it.flush()
+        val process = processBuilder.start()
+
+        // Write input JSON to the python script's stdin
+        process.outputStream.use { outputStream ->
+            outputStream.write(inputJson.toByteArray())
+            outputStream.flush()
         }
 
-        // read the JSON result from the script's stdout
-        val output = process.inputStream.bufferedReader().readText()
+        // Read the output JSON from python script's stdout
+        val output = process.inputStream.bufferedReader().use { it.readText() }
 
-        // deserialize the output JSON into an AsapResponse
-        val result = objectMapper.readValue(output, AsapResponse::class.java)
+        // Wait for the process to finish (optional timeout 10 sec)
+        if (!process.waitFor(10, TimeUnit.SECONDS)) {
+            process.destroy()
+            throw RuntimeException("Python process timed out")
+        }
 
-        // convert nested list into Kotlin Pair values
-        val pairs = result.pairs.map { pair -> Pair(pair[0], pair[1]) }
+        if (process.exitValue() != 0) {
+            throw RuntimeException("Python process exited with code ${process.exitValue()}: $output")
+        }
 
+        println("Received output: $output")
+
+        if (!output.trim().startsWith("{")) {
+            throw IllegalArgumentException("Expected JSON output but got: $output")
+        }
+
+        // Deserialize output JSON into AsapResponse
+        val result: AsapResponse = objectMapper.readValue(output)
+
+        // Map nested list to list of Kotlin Pairs
+        val pairs = result.pairs.map { Pair(it[0], it[1]) }
 
         return Pair(pairs, result.max_eig)
     }

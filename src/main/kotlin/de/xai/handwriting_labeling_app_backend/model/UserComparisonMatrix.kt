@@ -3,22 +3,23 @@ package de.xai.handwriting_labeling_app_backend.model
 import jakarta.persistence.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
+
 @Entity
-@Table(name = "user_comparison_matrix")
+@Table(name = "user_comparison_matrix", uniqueConstraints = [UniqueConstraint(columnNames = ["user_id"])])
 class UserComparisonMatrix(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @ManyToOne
+    var user: User? = null,
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    val user: User,
-
-    @Lob
     @Column(name = "matrix_json", nullable = false)
-    var matrixJson: String,
+    var matrixJson: String = "",
 
     @Column(name = "sample_ids_json")
-    var sampleIdsJson: String // This will store the sample IDs in the order corresponding to matrix indices
+    var sampleIdsJson: String? = null
+) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+}
 
-)
+

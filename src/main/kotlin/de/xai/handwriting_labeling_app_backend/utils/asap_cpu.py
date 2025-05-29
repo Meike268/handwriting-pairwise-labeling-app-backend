@@ -4,6 +4,8 @@ import random
 import networkx as nx
 import scipy.stats
 import copy
+import sys
+
 
 class ASAP():
 
@@ -49,7 +51,7 @@ class ASAP():
         inf_mat[inf_mat<=0] = np.inf
         inf_mat = 1/inf_mat
 
-        GrMST=nx.from_numpy_matrix(inf_mat)
+        GrMST = nx.from_numpy_array(inf_mat)
         T=nx.minimum_spanning_tree(GrMST)
 
         pairs_to_compare = np.asarray(T.edges())
@@ -63,7 +65,7 @@ class ASAP():
     def run_asap(self, M, mst_mode=True):
         '''
         The main function to generate pairs for comparisons from the pairwise comparison matrix M
-        ''' 
+        '''
         
         N = np.shape(M)[0]
         

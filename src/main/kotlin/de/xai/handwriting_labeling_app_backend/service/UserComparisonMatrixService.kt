@@ -13,12 +13,25 @@ import com.fasterxml.jackson.core.type.TypeReference
 @Service
 class UserComparisonMatrixService(
     private val matrixRepo: UserComparisonMatrixRepository,
-    private val sampleRepository: SampleRepository
+    private val sampleRepository: SampleRepository,
+    private val userRepository: UserRepository
+
 ) {
-    fun getMatrixForUser(user: User, size: Int): Pair<Array<IntArray>, List<Long>> {
+    fun getMatrixForUser(
+        username: String,
+        size: Int
+    ): Pair<Array<IntArray>, List<Long>> {
+
         val objectMapper = ObjectMapper()
 
-        val entity = matrixRepo.findByUser(user)
+        val user = userRepository.findByUsername(username)
+            ?: throw IllegalArgumentException("No user found with username: $username")
+
+
+        val entity = matrixRepo.findByUserId(user.id!!)
+
+
+
         return if (entity != null) {
             // Deserialize the matrix JSON into Array<IntArray>
             val matrix: Array<IntArray> = objectMapper.readValue(
@@ -35,14 +48,16 @@ class UserComparisonMatrixService(
             Pair(matrix, sampleIds)
         } else {
             val emptyMatrix = Array(size) { IntArray(size) }
-            saveMatrixForUser(user, emptyMatrix, listOf())
+            saveMatrixForUser(username, emptyMatrix, listOf())
             Pair(emptyMatrix, listOf())
         }
+        //return Pair(emptyArray(), emptyList<Long>())
     }
 
-
-    fun saveMatrixForUser(user: User, matrix: Array<IntArray>, samples: List<Sample>) {
+    fun saveMatrixForUser(username: String, matrix: Array<IntArray>, samples: List<Sample>) {
         val objectMapper = ObjectMapper()
+        val user = userRepository.findByUsername(username)
+                ?: throw IllegalArgumentException("No user found with username: $username")
 
         val json = objectMapper.writeValueAsString(matrix)
 
@@ -50,7 +65,7 @@ class UserComparisonMatrixService(
         val sampleIds = samples.map { it.id }
         val sampleIdsJson = objectMapper.writeValueAsString(sampleIds)
 
-        val existing = matrixRepo.findByUser(user)
+        val existing = matrixRepo.findByUserId(user.id!!)
         if (existing != null) {
             existing.matrixJson = json
             existing.sampleIdsJson = sampleIdsJson
@@ -60,16 +75,15 @@ class UserComparisonMatrixService(
         }
     }
 
-
-    fun recordComparison(user: User, winnerId: Long, loserId: Long, size: Int) {
-        val (matrix, sampleIds) = getMatrixForUser(user, size)
+    fun recordComparison(username: String, winnerId: Long, loserId: Long, size: Int) {
+        val (matrix, sampleIds) = getMatrixForUser(username, size)
 
         val winnerIndex = sampleIds.indexOf(winnerId)
         val loserIndex = sampleIds.indexOf(loserId)
 
         // Logic to update the matrix with winner and loser indices
         matrix[winnerIndex][loserIndex] += 1
-        saveMatrixForUser(user, matrix, fetchSamplesByIds(sampleIds)) // Fetch samples by IDs and save updated matrix
+        saveMatrixForUser(username, matrix, fetchSamplesByIds(sampleIds)) // Fetch samples by IDs and save updated matrix
     }
     
     fun fetchSamplesByIds(sampleIds: List<Long>): List<Sample> {

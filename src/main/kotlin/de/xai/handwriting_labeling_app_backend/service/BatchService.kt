@@ -30,7 +30,6 @@ class BatchService(
 
     fun generateBatch(
         username: String,
-
     ): GetBatchResponseBody {
         /**val allSamples = sampleRepository.findAll()
         for (sample in allSamples) {
@@ -48,34 +47,35 @@ class BatchService(
             ?: throw IllegalArgumentException("No user found with username: $username")
         logger.info("Generating random batch for user $user")
 
-        val batchLimit = 25  // Set your limit here
+        val batchLimit = 25  // Each annotator does a maximum of 25 batches
         val userBatchCount = userBatchLogRepository.countByUserId(user.id!!)
 
         if (userBatchCount >= batchLimit) {
             logger.info("User ${user.username} reached batch limit ($batchLimit).")
-            return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
+            return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, body = null)
         }
 
 
         val config = configHandler.readBatchServiceConfig()
-
 
         val taskBatchBody = if (config.samplesOrigin == XAI_SENTENCE_DIRECTORY_NAME)
             findXaiSentenceBatch(
                 targetAnswerCount = config.targetAnswerCount,
                 targetExpertAnswerCount = config.targetExpertAnswerCount,
                 batchSize = config.batchSize,
-                userId = user.id!!,
+                userId = user.id,
+                username = username,
                 forExpert = user.isExpert(),
                 possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
                 possiblePrioritizedSentences = config.prioritizedReferenceSentences.toMutableList(),
                 // excludedTasks = excludedTasks
             )
+
         else
             TODO()
 
         if (taskBatchBody == null) {
-            return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, null)
+            return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, body = null)
         }
 
         userBatchLogRepository.save(UserBatchLog(user = user))
@@ -116,18 +116,16 @@ class BatchService(
         targetExpertAnswerCount: Int,
         batchSize: Int,
         userId: Long,
+        username: String,
         forExpert: Boolean,
         possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>,
     ): TaskBatchInfoBody? {
-        val user = userRepository.findById(userId).orElseThrow {
-            IllegalArgumentException("User with ID $userId not found.")
-        }
-
         val submittedAnswersCount = answerRepository.findByUserId(userId).size
         var pendingAnswersCount = 0
 
-        val availableTasks = taskService.findAll(user)
+        val availableTasks = taskService.findAll(username)
+        // val availableTasks = emptyList<Task>() // for testing
 
         // Commented out: Prioritization logic
     //    val questionPriorities = possiblePrioritizedQuestions.map { prioritizedQuestion ->

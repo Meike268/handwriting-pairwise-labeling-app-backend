@@ -96,4 +96,14 @@ CREATE TABLE `report` (
     `message`  bigint NOT NULL,
     `submission_timestamp` timestamp NOT NULL,
     PRIMARY KEY (`id`)
-)
+);
+
+CREATE TABLE user_comparison_matrix (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    matrix_json LONGTEXT NOT NULL,
+    sample_ids_json TEXT,
+
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+

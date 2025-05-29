@@ -6,13 +6,16 @@ cd "$SCRIPT_DIR" || exit 1
 ENV_FILE=.env
 if [ ! -f "$ENV_FILE" ]; then
   echo \
-"APP_URL_ROOTS=http://localhost:3000
+"
+APP_URL_ROOTS=http://localhost:3000
 
 MYSQL_HOST=localhost
 MYSQL_PORT=3306
 MYSQL_DATABASE=handwriting_labeling_app
-MYSQL_USERNAME=xxxxxxxxxxxxxxx
-MYSQL_PASSWORD=xxxxxxxxxxxxxxx
+MYSQL_USERNAME=root
+MYSQL_PASSWORD=rootpassword
+
+REACT_APP_BACKEND_URL_ROOT=http://localhost:8080
 " \
 > "$ENV_FILE"
 fi
@@ -24,7 +27,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
    \"samplesOrigin\": \"xai_sentences\",
    \"batchSize\": 99,
    \"targetExpertAnswerCount\": 0,
-   \"targetAnswerCount\": 1,
+   \"targetAnswerCount\": 3,
    \"prioritizedReferenceSentences\": [],
    \"prioritizedQuestions\": []
  }

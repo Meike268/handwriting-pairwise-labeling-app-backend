@@ -13,7 +13,6 @@ import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
-
 @Configuration
 @EnableWebSecurity
 class SecurityConfig (val env: Environment) {
@@ -23,6 +22,8 @@ class SecurityConfig (val env: Environment) {
             authorizeHttpRequests {
                 authorize("/ping", permitAll)
                 authorize("/files/**", authenticated)
+                authorize("/matrices/**", authenticated)
+
 
                 authorize("/users", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/addOne", hasRole("ADMIN"))
@@ -42,6 +43,7 @@ class SecurityConfig (val env: Environment) {
 
                 authorize(HttpMethod.GET, "/config", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/config", hasRole("ADMIN"))
+
             }
             httpBasic { }
             csrf { disable() }

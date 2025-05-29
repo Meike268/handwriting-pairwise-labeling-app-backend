@@ -8,6 +8,9 @@ interface AnswerRepository: JpaRepository<Answer, Long> {
 
     fun findByUserId(userId: Long): List<Answer>
 
-    fun findAllBySampleId(sampleId: Long): List<Answer>
+    fun findAllBySampleId1(sampleId1: Long): List<Answer>
+
+    fun findAllBySampleId2(sampleId2: Long): List<Answer>
+
 }
 
