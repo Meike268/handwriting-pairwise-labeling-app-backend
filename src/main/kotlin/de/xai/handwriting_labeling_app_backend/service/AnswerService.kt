@@ -34,14 +34,14 @@ class AnswerService(
     ): Answer {
         val user = userRepository.findByUsername(username)
             ?: throw IllegalArgumentException("No user found with username: $username")
-        logger.info("Generating random batch for user $user")
+        logger.info("Saving answer for user $user")
         val question = questionRepository.findById(questionId).get()
 
         // record result in userComparisonMatrix
         if (score != 0) {
             val winnerId = if (score == 1) sampleId1 else sampleId2
             val loserId = if (score == 1)  sampleId2 else sampleId1
-            userComparisonMatrixService.recordComparison(username, winnerId, loserId, size = 10)
+            userComparisonMatrixService.recordComparison(username, winnerId, loserId)
         }
 
         return answerRepository.save(

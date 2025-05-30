@@ -7,6 +7,9 @@ import de.xai.handwriting_labeling_app_backend.service.AsapService
 import de.xai.handwriting_labeling_app_backend.model.User
 import org.springframework.stereotype.Service
 
+import org.slf4j.LoggerFactory
+
+
 
 @Service
 class TaskService(
@@ -15,6 +18,8 @@ class TaskService(
     private val matrixService: UserComparisonMatrixService,
     private val matrixRepository: UserComparisonMatrixRepository
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     fun findAll(
         username: String,
     ): List<Task> {
@@ -23,14 +28,16 @@ class TaskService(
         val samples = sampleRepository.findAll()
             .sortedBy { it.id }
             .filter { it.referenceSentence?.isQuestion1Applicable() == true }
-            .shuffled() // take out later
-            .take(10) // take out later
+
 
         // get comparison matrix for user from db
-        val (matrix, _) = matrixService.getMatrixForUser(username, samples.size)
+        val (matrix, _) = matrixService.getMatrixForUser(username)
 
         // get recommended pairsToCompare and maxEIG from asapService based on comparison matrix
         val (pairsToCompare, maxEIG) = asapService.getPairsToCompare(matrix)
+
+        logger.info("pairsToCompare: $pairsToCompare")
+        logger.info("maxEIG: $maxEIG")
 
         if(maxEIG < 0.5) {
             // All comparisons offer low additional value -> stop requesting more

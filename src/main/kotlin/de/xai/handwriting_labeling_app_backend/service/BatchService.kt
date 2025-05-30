@@ -74,16 +74,22 @@ class BatchService(
         else
             TODO()
 
+        logger.info("taskBatchBody: $taskBatchBody")
+
         if (taskBatchBody == null) {
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, body = null)
         }
 
         userBatchLogRepository.save(UserBatchLog(user = user))
 
-        return GetBatchResponseBody(
+        val response =  GetBatchResponseBody(
             state = GET_BATCH_RESPONSE_STATE_SUCCESS,
             body = taskBatchBody
         )
+
+        logger.info("response: $response")
+
+        return response
     }
 
     /**
@@ -148,7 +154,6 @@ class BatchService(
     //        }
     //    }.shuffled().sortedBy { it.second }
 
-        var firstFoundBatch: TaskBatchInfoBody? = null
 
         // Commented out: Full priority-based loop
     //    for ((questionAndSentence, _) in questionAndSentencePriorities) {
@@ -204,46 +209,45 @@ class BatchService(
     //        )
     //    }
 
-        // New simplified logic using ASAP-based task list directly
-        val groupedByQuestionAndSentence = availableTasks.groupBy { Triple(it.question, it.sample1.referenceSentence, it.sample2.referenceSentence) }
+        logger.info("availableTasks: $availableTasks")
 
-        for ((key, tasks) in groupedByQuestionAndSentence) {
-            val (question, sentence1, sentence2) = key
+        val validTasks = availableTasks.filter { task ->
+            val ref1 = task.sample1.referenceSentence
+            val ref2 = task.sample2.referenceSentence
+            ref1 != null && ref2 != null &&
+            ref1.isQuestion1Applicable() && ref2.isQuestion1Applicable()
+        }
 
-            if (sentence1 == null || sentence2 == null || sentence1?.isQuestion1Applicable() != true || sentence2?.isQuestion1Applicable() != true) {
-                continue
-            }
+        logger.info("validTasks: $validTasks")
 
-            pendingAnswersCount += tasks.size
+        if (validTasks.isEmpty()) return null
 
-            if (firstFoundBatch != null || tasks.isEmpty()) {
-                continue
-            }
-
-            val batchTasks = tasks
-                .shuffled()
-                .take(batchSize)
-                .map { task ->
-                    Pair(SampleInfoBody.fromSample(task.sample1), SampleInfoBody.fromSample(task.sample2))
-                }
-
-            val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
-                ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
-
-            firstFoundBatch = TaskBatchInfoBody(
-                userAnswerCounts = GetUserAnswerCountsBody(
-                    submittedAnswersCount = submittedAnswersCount,
-                    pendingAnswersCount = null
-                ),
-                question = question,
-                example = example,
-                samplePairs = batchTasks
+        val samplePairs = validTasks.map { task ->
+            Pair(
+                SampleInfoBody.fromSample(task.sample1),
+                SampleInfoBody.fromSample(task.sample2)
             )
         }
 
-        firstFoundBatch?.userAnswerCounts?.pendingAnswersCount = pendingAnswersCount
+        val firstTask = validTasks.first()
+
+        val example = firstTask.question.exampleImageName?.let { exampleRepository.findByImageName(it) }
+            ?: throw IllegalStateException("Could not retrieve Example for image with name ${firstTask.question.exampleImageName}")
+
+        val firstFoundBatch = TaskBatchInfoBody(
+            userAnswerCounts = GetUserAnswerCountsBody(
+                submittedAnswersCount = submittedAnswersCount,
+                pendingAnswersCount = samplePairs.size
+            ),
+            question = firstTask.question,
+            example = example,
+            samplePairs = samplePairs
+        )
+
+        logger.info("firstFoundBatch: $firstFoundBatch")
 
         return firstFoundBatch
+
     }
 
 

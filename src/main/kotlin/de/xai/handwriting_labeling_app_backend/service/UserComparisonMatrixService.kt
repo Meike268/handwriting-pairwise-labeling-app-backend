@@ -18,8 +18,7 @@ class UserComparisonMatrixService(
 
 ) {
     fun getMatrixForUser(
-        username: String,
-        size: Int
+        username: String
     ): Pair<Array<IntArray>, List<Long>> {
 
         val objectMapper = ObjectMapper()
@@ -27,10 +26,7 @@ class UserComparisonMatrixService(
         val user = userRepository.findByUsername(username)
             ?: throw IllegalArgumentException("No user found with username: $username")
 
-
         val entity = matrixRepo.findByUserId(user.id!!)
-
-
 
         return if (entity != null) {
             // Deserialize the matrix JSON into Array<IntArray>
@@ -47,24 +43,37 @@ class UserComparisonMatrixService(
 
             Pair(matrix, sampleIds)
         } else {
-            val emptyMatrix = Array(size) { IntArray(size) }
-            saveMatrixForUser(username, emptyMatrix, listOf())
-            Pair(emptyMatrix, listOf())
+            // No matrix exists, create a new one
+            // Fetch and sort all samples via sampleRepository
+            val samples = sampleRepository.findAll()
+                .sortedBy { it.id } // Ensure samples are sorted by id in ascending order
+
+
+            // Populate the sampleIds list based on the sorted samples
+            val sampleIds = samples.map { it.id } // Get IDs in the sorted order
+
+            // Create a matrix with the size matching the number of samples
+            val newSize = samples.size
+            val newMatrix = Array(newSize) { IntArray(newSize) }
+
+            // Save the new matrix and sample IDs
+            saveMatrixForUser(username, newMatrix, sampleIds)
+
+            // Return the new empty matrix and sample IDs
+            Pair(newMatrix, sampleIds)
         }
-        //return Pair(emptyArray(), emptyList<Long>())
     }
 
-    fun saveMatrixForUser(username: String, matrix: Array<IntArray>, samples: List<Sample>) {
+
+
+    fun saveMatrixForUser(username: String, matrix: Array<IntArray>, samples: List<Long>) {
         val objectMapper = ObjectMapper()
         val user = userRepository.findByUsername(username)
                 ?: throw IllegalArgumentException("No user found with username: $username")
 
         val json = objectMapper.writeValueAsString(matrix)
 
-        // Get the sorted sample IDs, which correspond to matrix indices
-        val sampleIds = samples.map { it.id }
-        val sampleIdsJson = objectMapper.writeValueAsString(sampleIds)
-
+        val sampleIdsJson = objectMapper.writeValueAsString(samples)
         val existing = matrixRepo.findByUserId(user.id!!)
         if (existing != null) {
             existing.matrixJson = json
@@ -75,18 +84,33 @@ class UserComparisonMatrixService(
         }
     }
 
-    fun recordComparison(username: String, winnerId: Long, loserId: Long, size: Int) {
-        val (matrix, sampleIds) = getMatrixForUser(username, size)
 
+    fun recordComparison(username: String, winnerId: Long, loserId: Long) {
+        // Fetch the matrix and sampleIds
+        val (matrix, sampleIds) = getMatrixForUser(username)
+
+        // Find the indices for winner and loser in the sampleIds list
         val winnerIndex = sampleIds.indexOf(winnerId)
         val loserIndex = sampleIds.indexOf(loserId)
 
+        // Ensure that the indices are within the bounds of sampleIds
+        if (winnerIndex < 0 || winnerIndex >= sampleIds.size || loserIndex < 0 || loserIndex >= sampleIds.size) {
+            throw IndexOutOfBoundsException("Invalid index. Ensure the indices are within the bounds of the sample list.")
+        }
+
         // Logic to update the matrix with winner and loser indices
         matrix[winnerIndex][loserIndex] += 1
-        saveMatrixForUser(username, matrix, fetchSamplesByIds(sampleIds)) // Fetch samples by IDs and save updated matrix
+
+        // Save the updated matrix and sample list
+        saveMatrixForUser(username, matrix, sampleIds)
     }
-    
-    fun fetchSamplesByIds(sampleIds: List<Long>): List<Sample> {
-        return sampleRepository.findAll()
+
+    // This method will retrieve all UserComparisonMatrix records
+    fun getAllMatrices(): List<UserComparisonMatrix> {
+        return matrixRepo.findAll()
     }
+
+
+
+
 }

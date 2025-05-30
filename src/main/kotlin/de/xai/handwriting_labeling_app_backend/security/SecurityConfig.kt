@@ -22,7 +22,13 @@ class SecurityConfig (val env: Environment) {
             authorizeHttpRequests {
                 authorize("/ping", permitAll)
                 authorize("/files/**", authenticated)
-                authorize("/matrices/**", authenticated)
+
+                authorize(HttpMethod.GET, "/matrices", hasRole("ADMIN"))
+
+                authorize(HttpMethod.GET, "/matrices/{username}", authenticated)
+                authorize(HttpMethod.POST, "/matrices/{username}/comparison", authenticated)
+                authorize(HttpMethod.POST, "/matrices/{username}/save", authenticated)
+
 
 
                 authorize("/users", hasRole("ADMIN"))

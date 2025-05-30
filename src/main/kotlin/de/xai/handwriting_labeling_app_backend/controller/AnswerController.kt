@@ -25,6 +25,7 @@ class AnswerController(
         logger.info("Received new answer: $answer from user ${principal.name}")
 
         return ResponseEntity.ok(
+
             answerService.createOrUpdate(
                 principal.name,
                 answer.sampleId1,
@@ -33,6 +34,7 @@ class AnswerController(
                 answer.score,
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(answer.submissionTimestamp), TimeZone.getDefault().toZoneId())
             )
+
         )
     }
 
