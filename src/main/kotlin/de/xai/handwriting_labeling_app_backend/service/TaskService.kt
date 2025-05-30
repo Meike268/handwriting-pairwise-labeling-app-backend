@@ -29,7 +29,6 @@ class TaskService(
             .sortedBy { it.id }
             .filter { it.referenceSentence?.isQuestion1Applicable() == true }
 
-
         // get comparison matrix for user from db
         val (matrix, _) = matrixService.getMatrixForUser(username)
 
@@ -41,7 +40,7 @@ class TaskService(
 
         if(maxEIG < 0.5) {
             // All comparisons offer low additional value -> stop requesting more
-            return emptyList() // TODO: tell frontend
+            return emptyList<Task>()
         }
 
         return pairsToCompare.flatMap { (i, j) ->
@@ -55,15 +54,14 @@ class TaskService(
                 sample1.referenceSentence!!.applicableQuestions
                     ?.firstOrNull { it.id == 1L }
                     ?.let { question -> listOf(Task(sample1, sample2, question)) }
-                    ?: emptyList()
+                    ?: emptyList<Task>()
 
             } else {
                 // If Question ID 1 is not applicable to either sample, return an empty list
-                emptyList() // TODO: tell frontend
+                emptyList<Task>()
             }
         }
 
-        //return emptyList<Task>()
     }
 }
 

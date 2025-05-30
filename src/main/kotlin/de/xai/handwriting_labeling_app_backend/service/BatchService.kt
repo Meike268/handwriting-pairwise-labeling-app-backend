@@ -31,32 +31,20 @@ class BatchService(
     fun generateBatch(
         username: String,
     ): GetBatchResponseBody {
-        /**val allSamples = sampleRepository.findAll()
-        for (sample in allSamples) {
-
-        answerService.createOrUpdate(
-        "user",
-        sampleId = sample.id,
-        questionId = 3,
-        score = 3,
-        submissionTimestamp = LocalDateTime.now()
-        )
-        }*/
 
         val user = userRepository.findByUsername(username)
             ?: throw IllegalArgumentException("No user found with username: $username")
         logger.info("Generating random batch for user $user")
 
-        val batchLimit = 25  // Each annotator does a maximum of 25 batches
+        val config = configHandler.readBatchServiceConfig()
+
+        val batchLimit = config.batchCount
         val userBatchCount = userBatchLogRepository.countByUserId(user.id!!)
 
         if (userBatchCount >= batchLimit) {
             logger.info("User ${user.username} reached batch limit ($batchLimit).")
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, body = null)
         }
-
-
-        val config = configHandler.readBatchServiceConfig()
 
         val taskBatchBody = if (config.samplesOrigin == XAI_SENTENCE_DIRECTORY_NAME)
             findXaiSentenceBatch(
@@ -127,10 +115,14 @@ class BatchService(
         possiblePrioritizedQuestions: MutableList<PrioritizedQuestion>,
         possiblePrioritizedSentences: MutableList<PrioritizedReferenceSentence>,
     ): TaskBatchInfoBody? {
+        val config = configHandler.readBatchServiceConfig()
+
         val submittedAnswersCount = answerRepository.findByUserId(userId).size
-        var pendingAnswersCount = 0
+        var pendingAnswersCount = config.batchSize * config.batchCount - submittedAnswersCount
 
         val availableTasks = taskService.findAll(username)
+
+
         // val availableTasks = emptyList<Task>() // for testing
 
         // Commented out: Prioritization logic
@@ -155,7 +147,7 @@ class BatchService(
     //    }.shuffled().sortedBy { it.second }
 
 
-        // Commented out: Full priority-based loop
+        // Commented out: Priority-based loop
     //    for ((questionAndSentence, _) in questionAndSentencePriorities) {
     //        val (question, sentence) = questionAndSentence
     //        if (question !in sentence.applicableQuestions!!) {
@@ -237,7 +229,7 @@ class BatchService(
         val firstFoundBatch = TaskBatchInfoBody(
             userAnswerCounts = GetUserAnswerCountsBody(
                 submittedAnswersCount = submittedAnswersCount,
-                pendingAnswersCount = samplePairs.size
+                pendingAnswersCount = pendingAnswersCount
             ),
             question = firstTask.question,
             example = example,

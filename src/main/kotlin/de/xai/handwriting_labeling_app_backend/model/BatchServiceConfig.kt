@@ -12,6 +12,9 @@ data class BatchServiceConfig(
     @JsonProperty("batchSize")
     val batchSize: Int,
 
+    @JsonProperty("batchCount")
+    val batchCount: Int,
+
     /**
      * For each applicable combination of sample and question, we need to collect n answers by experts
      * */

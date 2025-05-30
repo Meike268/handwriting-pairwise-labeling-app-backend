@@ -1,3 +1,6 @@
+package de.xai.handwriting_labeling_app_backend.controller
+
+
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import de.xai.handwriting_labeling_app_backend.service.UserComparisonMatrixService
@@ -6,26 +9,31 @@ import de.xai.handwriting_labeling_app_backend.model.Sample
 import de.xai.handwriting_labeling_app_backend.model.UserComparisonMatrix
 import org.slf4j.LoggerFactory
 
+import java.security.Principal
+import java.time.Instant
+import java.time.LocalDateTime
+import java.util.*
+
 
 
 @RestController
-@RequestMapping("/matrices")
+@RequestMapping("/matrix")
 class UserComparisonMatrixController(
     private val matrixService: UserComparisonMatrixService,
     private val matrixRepo: UserComparisonMatrixRepository
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-
     // Endpoint to fetch all user comparison matrices
     @GetMapping
     fun getAllMatrices(): ResponseEntity<List<UserComparisonMatrix>> {
+        logger.info("Getting all matrices.")
+
         val matrices = matrixService.getAllMatrices()
         return ResponseEntity.ok(matrices)
     }
 
     // Endpoint to fetch matrix for a specific user
-
     @GetMapping("/{username}")
     fun getMatrix(@PathVariable username: String): ResponseEntity<Pair<Array<IntArray>, List<Long>>> {
         logger.info("Received new request for user ${username}")
