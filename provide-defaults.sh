@@ -25,7 +25,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
   echo \
 "{
    \"samplesOrigin\": \"xai_sentences\",
-   \"batchSize\": 99,
+   \"batchSize\": 9,
+   \"batchCount\": 25,
    \"targetExpertAnswerCount\": 0,
    \"targetAnswerCount\": 3,
    \"prioritizedReferenceSentences\": [],
