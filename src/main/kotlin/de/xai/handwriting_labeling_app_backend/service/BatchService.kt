@@ -39,9 +39,11 @@ class BatchService(
         val config = configHandler.readBatchServiceConfig()
 
         val batchLimit = config.batchCount
+        val batchSize = config.batchSize
         val userBatchCount = userBatchLogRepository.countByUserId(user.id!!)
+        val userAnswerCount = answerRepository.findByUserId(user.id!!).size
 
-        if (userBatchCount >= batchLimit) {
+        if (userAnswerCount >= batchLimit * batchSize) {
             logger.info("User ${user.username} reached batch limit ($batchLimit).")
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, body = null)
         }
@@ -68,7 +70,14 @@ class BatchService(
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, body = null)
         }
 
-        userBatchLogRepository.save(UserBatchLog(user = user))
+        var hasSavedLog = false
+
+        if (!hasSavedLog){
+            userBatchLogRepository.save(UserBatchLog(user = user))
+            hasSavedLog = true
+        }
+
+
 
         val response =  GetBatchResponseBody(
             state = GET_BATCH_RESPONSE_STATE_SUCCESS,
