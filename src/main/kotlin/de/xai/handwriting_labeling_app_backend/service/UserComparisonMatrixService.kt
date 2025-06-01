@@ -9,6 +9,15 @@ import de.xai.handwriting_labeling_app_backend.model.*
 import de.xai.handwriting_labeling_app_backend.repository.*
 import com.fasterxml.jackson.core.type.TypeReference
 
+import java.util.Base64
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.util.zip.GZIPOutputStream
+import java.util.zip.GZIPInputStream
+import java.io.ByteArrayInputStream
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+
 
 @Service
 class UserComparisonMatrixService(
@@ -17,11 +26,34 @@ class UserComparisonMatrixService(
     private val userRepository: UserRepository
 
 ) {
-    fun getMatrixForUser(
-        username: String
-    ): Pair<Array<IntArray>, List<Long>> {
 
-        val objectMapper = ObjectMapper()
+    // GZIP Compression function
+    fun compress(data: String): ByteArray {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        GZIPOutputStream(byteArrayOutputStream).use { it.write(data.toByteArray()) }
+        return byteArrayOutputStream.toByteArray()
+    }
+
+    // GZIP Decompression function
+    fun decompress(compressedData: ByteArray): String {
+        val byteArrayInputStream = ByteArrayInputStream(compressedData)
+        val gzipInputStream = GZIPInputStream(byteArrayInputStream)
+        val decompressedData = gzipInputStream.readBytes()
+        return String(decompressedData)
+    }
+
+    // Base64 encoding (to convert ByteArray to String)
+    fun encodeToBase64(data: ByteArray): String {
+        return Base64.getEncoder().encodeToString(data)
+    }
+
+    // Base64 decoding (to convert String back to ByteArray)
+    fun decodeFromBase64(encodedData: String): ByteArray {
+        return Base64.getDecoder().decode(encodedData)
+    }
+
+    fun getMatrixForUser(username: String): Pair<Array<IntArray>, List<Long>> {
+        val objectMapper = jacksonObjectMapper()
 
         val user = userRepository.findByUsername(username)
             ?: throw IllegalArgumentException("No user found with username: $username")
@@ -29,61 +61,57 @@ class UserComparisonMatrixService(
         val entity = matrixRepo.findByUserId(user.id!!)
 
         return if (entity != null) {
-            // Deserialize the matrix JSON into Array<IntArray>
-            val matrix: Array<IntArray> = objectMapper.readValue(
-                entity.matrixJson,
-                object : TypeReference<Array<IntArray>>() {}
-            )
+            // Decompress and decode the matrix JSON
+            val decompressedMatrixJson = decompress(decodeFromBase64(entity.matrixJson))
+            val matrix: Array<IntArray> = objectMapper.readValue(decompressedMatrixJson)
 
-            // Deserialize the sample IDs JSON into List<Long>
-            val sampleIds: List<Long> = objectMapper.readValue(
-                entity.sampleIdsJson,
-                object : TypeReference<List<Long>>() {}
-            )
+            // Decompress and decode the sample IDs JSON (no need for null checks)
+            val decompressedSampleIdsJson = decompress(decodeFromBase64(entity.sampleIdsJson))
+            val sampleIds: List<Long> = objectMapper.readValue(decompressedSampleIdsJson)
 
             Pair(matrix, sampleIds)
         } else {
             // No matrix exists, create a new one
-            // Fetch and sort all samples via sampleRepository
             val samples = sampleRepository.findAll()
-                .sortedBy { it.id } // Ensure samples are sorted by id in ascending order
+                .sortedBy { it.id }
 
+            val sampleIds = samples.map { it.id }
 
-            // Populate the sampleIds list based on the sorted samples
-            val sampleIds = samples.map { it.id } // Get IDs in the sorted order
-
-            // Create a matrix with the size matching the number of samples
             val newSize = samples.size
             val newMatrix = Array(newSize) { IntArray(newSize) }
 
-            // Save the new matrix and sample IDs
             saveMatrixForUser(username, newMatrix, sampleIds)
 
-            // Return the new empty matrix and sample IDs
             Pair(newMatrix, sampleIds)
         }
     }
 
-
-
     fun saveMatrixForUser(username: String, matrix: Array<IntArray>, samples: List<Long>) {
-        val objectMapper = ObjectMapper()
+        val objectMapper = jacksonObjectMapper()
         val user = userRepository.findByUsername(username)
-                ?: throw IllegalArgumentException("No user found with username: $username")
+            ?: throw IllegalArgumentException("No user found with username: $username")
 
-        val json = objectMapper.writeValueAsString(matrix)
-
+        // Convert matrix and sample IDs to JSON strings
+        val matrixJson = objectMapper.writeValueAsString(matrix)
         val sampleIdsJson = objectMapper.writeValueAsString(samples)
+
+        // Compress both matrix and sample IDs JSON
+        val compressedMatrixJson = compress(matrixJson)
+        val compressedSampleIdsJson = compress(sampleIdsJson)
+
+        // Encode the compressed byte arrays to Base64 strings
+        val encodedMatrixJson = encodeToBase64(compressedMatrixJson)
+        val encodedSampleIdsJson = encodeToBase64(compressedSampleIdsJson)
+
         val existing = matrixRepo.findByUserId(user.id!!)
         if (existing != null) {
-            existing.matrixJson = json
-            existing.sampleIdsJson = sampleIdsJson
+            existing.matrixJson = encodedMatrixJson
+            existing.sampleIdsJson = encodedSampleIdsJson
             matrixRepo.save(existing)
         } else {
-            matrixRepo.save(UserComparisonMatrix(user = user, matrixJson = json, sampleIdsJson = sampleIdsJson))
+            matrixRepo.save(UserComparisonMatrix(user = user, matrixJson = encodedMatrixJson, sampleIdsJson = encodedSampleIdsJson))
         }
     }
-
 
     fun recordComparison(username: String, winnerId: Long, loserId: Long) {
         // Fetch the matrix and sampleIds

@@ -15,7 +15,7 @@ class UserComparisonMatrix(
     var matrixJson: String = "",
 
     @Column(name = "sample_ids_json")
-    var sampleIdsJson: String? = null
+    var sampleIdsJson: String = ""
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
