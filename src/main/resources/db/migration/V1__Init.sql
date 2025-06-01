@@ -73,7 +73,7 @@ INSERT INTO `applicable_question`(`reference_sentence_id`, `question_id`)
 VALUES (1, 1), (2, 1), (3, 1),(4, 1),(6, 1),(7, 1),(8, 1),(9, 1),(10, 1),
        (1, 2),(2, 2),(3, 2),(4, 2),(6, 2),(7, 2),(8, 2),(9, 2),(10, 2),
        (1, 3),(2, 3),(3, 3),(4, 3),(6, 3),(7, 3),(8, 3),(9, 3),(10, 3),
-       (1, 4),(2, 4),(6, 4),(7, 4),(8, 4);
+       (1, 4),(2, 4),(7, 4),(8, 4), (5,1),(5,2),(5,3),(5,4);
 
 CREATE TABLE `answer` (
     `user_id` bigint NOT NULL,
@@ -103,6 +103,14 @@ CREATE TABLE user_comparison_matrix (
     user_id BIGINT NOT NULL,
     matrix_json LONGTEXT NOT NULL,
     sample_ids_json TEXT,
+
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+CREATE TABLE user_batch_log (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    timestamp timestamp NOT NULL,
 
     FOREIGN KEY (user_id) REFERENCES user(id)
 );
