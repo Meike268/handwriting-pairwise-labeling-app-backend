@@ -38,4 +38,6 @@ class UserBatchLogController(
 
         return ResponseEntity.ok(batchService.countBatchForUser(username))
     }
+
+
 }

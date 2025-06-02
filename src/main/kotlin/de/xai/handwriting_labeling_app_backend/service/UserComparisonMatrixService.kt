@@ -17,6 +17,8 @@ import java.util.zip.GZIPInputStream
 import java.io.ByteArrayInputStream
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.slf4j.LoggerFactory
+
 
 
 @Service
@@ -26,6 +28,8 @@ class UserComparisonMatrixService(
     private val userRepository: UserRepository
 
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
 
     // GZIP Compression function
     fun compress(data: String): ByteArray {
@@ -63,7 +67,11 @@ class UserComparisonMatrixService(
         return if (entity != null) {
             // Decompress and decode the matrix JSON
             val decompressedMatrixJson = decompress(decodeFromBase64(entity.matrixJson))
+            logger.info("decompressed matrix: $decompressedMatrixJson")
+
             val matrix: Array<IntArray> = objectMapper.readValue(decompressedMatrixJson)
+            logger.info("matrix: $matrix")
+
 
             // Decompress and decode the sample IDs JSON (no need for null checks)
             val decompressedSampleIdsJson = decompress(decodeFromBase64(entity.sampleIdsJson))

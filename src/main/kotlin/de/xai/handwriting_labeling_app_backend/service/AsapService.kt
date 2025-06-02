@@ -10,17 +10,24 @@ import de.xai.handwriting_labeling_app_backend.repository.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.util.concurrent.TimeUnit
+import org.slf4j.LoggerFactory
+
 
 @Service
 class AsapService {
 
     private val objectMapper = jacksonObjectMapper()
+    private val logger = LoggerFactory.getLogger(javaClass)
+
 
     fun getPairsToCompare(matrix: Array<IntArray>): Pair<List<Pair<Int, Int>>, Double> {
         val pythonScriptPath = "src/main/kotlin/de/xai/handwriting_labeling_app_backend/utils/asap_runner.py"
 
         // serialize the matrix into JSON string
-        val inputJson = objectMapper.writeValueAsString(mapOf("matrix" to matrix))
+        val matrixList = matrix.map { it.toList() } // Convert Array<IntArray> → List<List<Int>>
+        val inputJson = objectMapper.writeValueAsString(mapOf("matrix" to matrixList))
+        //logger.info("inputJson: $inputJson")
+
 
         val processBuilder = ProcessBuilder("python", pythonScriptPath)
             .redirectErrorStream(true) // merge stdout and stderr
@@ -46,8 +53,6 @@ class AsapService {
             throw RuntimeException("Python process exited with code ${process.exitValue()}: $output")
         }
 
-        println("Received output: $output")
-
         if (!output.trim().startsWith("{")) {
             throw IllegalArgumentException("Expected JSON output but got: $output")
         }
@@ -58,6 +63,6 @@ class AsapService {
         // Map nested list to list of Kotlin Pairs
         val pairs = result.pairs.map { Pair(it[0], it[1]) }
 
-        return Pair(pairs, result.max_eig)
+        return Pair(pairs, result.mean_eig)
     }
 }

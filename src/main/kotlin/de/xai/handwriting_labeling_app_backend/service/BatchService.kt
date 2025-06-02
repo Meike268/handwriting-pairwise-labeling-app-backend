@@ -210,7 +210,7 @@ class BatchService(
     //        )
     //    }
 
-        logger.info("availableTasks: $availableTasks")
+        // logger.info("availableTasks: $availableTasks")
 
         val validTasks = availableTasks.filter { task ->
             val ref1 = task.sample1.referenceSentence
@@ -219,7 +219,7 @@ class BatchService(
             ref1.isQuestion1Applicable() && ref2.isQuestion1Applicable()
         }
 
-        logger.info("validTasks: $validTasks")
+        // logger.info("validTasks: $validTasks")
 
         if (validTasks.isEmpty()) return null
 
@@ -245,7 +245,7 @@ class BatchService(
             samplePairs = samplePairs
         )
 
-        logger.info("firstFoundBatch: $firstFoundBatch")
+        // logger.info("firstFoundBatch: $firstFoundBatch")
 
         return firstFoundBatch
 
