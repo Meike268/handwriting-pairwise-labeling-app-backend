@@ -12,8 +12,8 @@ APP_URL_ROOTS=http://localhost:3000
 MYSQL_HOST=localhost
 MYSQL_PORT=3306
 MYSQL_DATABASE=handwriting_labeling_app
-MYSQL_USERNAME=root
-MYSQL_PASSWORD=rootpassword
+MYSQL_USERNAME=xxxxxxxxxxxxxxx
+MYSQL_PASSWORD=xxxxxxxxxxxxxxx
 
 REACT_APP_BACKEND_URL_ROOT=http://localhost:8080
 " \
@@ -25,7 +25,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   echo \
 "{
    \"samplesOrigin\": \"xai_sentences\",
-   \"batchSize\": 9,
+   \"batchSize\": 99,
    \"batchCount\": 25,
    \"targetExpertAnswerCount\": 0,
    \"targetAnswerCount\": 3,

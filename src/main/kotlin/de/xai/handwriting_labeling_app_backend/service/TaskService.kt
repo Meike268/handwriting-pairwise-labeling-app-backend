@@ -32,9 +32,7 @@ class TaskService(
         // get comparison matrix for user from db
         val (matrix, _) = matrixService.getMatrixForUser(username)
 
-        //logger.info("matrix: $matrix")
-
-        // get recommended pairsToCompare and maxEIG from asapService based on comparison matrix
+        // get recommended pairsToCompare and meanEIG from asapService based on comparison matrix
         val (pairsToCompare, meanEIG) = asapService.getPairsToCompare(matrix)
 
         // only label pairs that haven't been labeled yet
@@ -44,7 +42,6 @@ class TaskService(
 
         logger.info("filteredPairs: $filteredPairs")
         logger.info("meanEIG: $meanEIG")
-
 
         return filteredPairs.flatMap { (i, j) ->
             val sample1 = samples[i]

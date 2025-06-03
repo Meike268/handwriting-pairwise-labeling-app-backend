@@ -32,6 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 /.env
-/src/main/resources/public/files/images/samples
+/src/main/resources/public/files/images/samples/
 /src/main/resources/batch_service_config.json
 /src/main/resources/public/files/images/examples/

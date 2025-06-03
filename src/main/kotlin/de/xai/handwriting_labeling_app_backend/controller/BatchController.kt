@@ -24,7 +24,6 @@ class BatchController(
     @GetMapping
     fun getRandomBatch(principal: Principal): GetBatchResponseBody {
         return batchService.generateBatch(principal.name)
-        // return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_SUCCESS, body = null) // for testing
     }
 }
 

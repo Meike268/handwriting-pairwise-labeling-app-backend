@@ -22,16 +22,13 @@ class UserBatchLogController(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    // Endpoint to fetch all user batch logs
     @GetMapping
     fun getAllBatchLogs(): ResponseEntity<List<UserBatchLog>> {
         logger.info("Getting all batch logs.")
 
-        val logs = batchService.getAllBatchLogs()
-        return ResponseEntity.ok(logs)
+        return ResponseEntity.ok(batchService.getAllBatchLogs())
     }
 
-    // Endpoint to get batch count for a specific user
     @GetMapping("/{username}")
     fun getCountBatchForUser(@PathVariable username: String): ResponseEntity<Int> {
         logger.info("Received new request for user $username")

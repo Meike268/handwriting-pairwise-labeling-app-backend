@@ -24,7 +24,6 @@ class UserComparisonMatrixController(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    // Endpoint to fetch all user comparison matrices
     @GetMapping
     fun getAllMatrices(): ResponseEntity<List<UserComparisonMatrix>> {
         logger.info("Getting all matrices.")
@@ -33,19 +32,15 @@ class UserComparisonMatrixController(
         return ResponseEntity.ok(matrices)
     }
 
-    // Endpoint to fetch matrix for a specific user
     @GetMapping("/{username}")
     fun getMatrix(@PathVariable username: String): ResponseEntity<Pair<Array<IntArray>, List<Long>>> {
         logger.info("Received new request for user ${username}")
 
-        return ResponseEntity.ok(
-            matrixService.getMatrixForUser(username)
-        )
+        return ResponseEntity.ok(matrixService.getMatrixForUser(username))
 
     }
 
 
-    // Endpoint to record a comparison between winner and loser
     @PostMapping("/{username}/comparison")
     fun recordComparison(
         @PathVariable username: String,
@@ -60,7 +55,6 @@ class UserComparisonMatrixController(
         }
     }
 
-    // Endpoint to save a matrix for a user
     @PostMapping("/{username}/save")
     fun saveMatrix(
         @PathVariable username: String,

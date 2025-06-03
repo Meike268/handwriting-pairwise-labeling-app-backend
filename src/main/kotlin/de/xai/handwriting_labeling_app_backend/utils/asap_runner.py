@@ -19,15 +19,11 @@ def main():
         asap = asap_cpu.ASAP(N, selective_eig=True, approx=False)
         inf_mat, pairs_to_compare = asap.run_asap(pwc_mat, mst_mode=True)
 
-        # Compute max EIG (ignoring -1s)
-        # valid_eigs = inf_mat[inf_mat >= 0]
-        # max_eig = float(valid_eigs.max()) if valid_eigs.size > 0 else 0.0
-
         # Compute mean EIG (ignoring -1s)
         valid_eigs = inf_mat[inf_mat >= 0]
         mean_eig = float(valid_eigs.mean()) if valid_eigs.size > 0 else 0.0
 
-        # output a list of index pairs and the max_eig
+        # output a list of index pairs and the mean_eig
         output = {
             "pairs": [list(pair) for pair in pairs_to_compare],
             "mean_eig": mean_eig

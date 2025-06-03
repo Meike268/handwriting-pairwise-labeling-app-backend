@@ -26,8 +26,6 @@ class AsapService {
         // serialize the matrix into JSON string
         val matrixList = matrix.map { it.toList() } // Convert Array<IntArray> → List<List<Int>>
         val inputJson = objectMapper.writeValueAsString(mapOf("matrix" to matrixList))
-        //logger.info("inputJson: $inputJson")
-
 
         val processBuilder = ProcessBuilder("python", pythonScriptPath)
             .redirectErrorStream(true) // merge stdout and stderr
@@ -43,7 +41,7 @@ class AsapService {
         // Read the output JSON from python script's stdout
         val output = process.inputStream.bufferedReader().use { it.readText() }
 
-        // Wait for the process to finish (optional timeout 10 sec)
+        // Wait for the process to finish
         if (!process.waitFor(10, TimeUnit.SECONDS)) {
             process.destroy()
             throw RuntimeException("Python process timed out")

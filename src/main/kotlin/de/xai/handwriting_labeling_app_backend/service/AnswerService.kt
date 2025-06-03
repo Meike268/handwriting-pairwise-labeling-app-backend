@@ -162,12 +162,12 @@ class AnswerService(
                 allOthersSamples.find { sample -> sample.id == sampleId1 }
             }
 
-            // Find the second sample using secondarySampleId or other logic (adjust this as needed)
+            // Find the second sample using sampleId2
             val sample2 = answer.sampleId2?.let { sampleId2 ->
                 allOthersSamples.find { sample -> sample.id == sampleId2 }
             }
 
-            // If either sample is not found, return null (skip this answer)
+            // If either sample is not found, return null
             if (sample1 == null || sample2 == null) {
                 return@mapNotNull null
             }

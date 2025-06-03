@@ -131,87 +131,6 @@ class BatchService(
 
         val availableTasks = taskService.findAll(username)
 
-
-        // val availableTasks = emptyList<Task>() // for testing
-
-        // Commented out: Prioritization logic
-    //    val questionPriorities = possiblePrioritizedQuestions.map { prioritizedQuestion ->
-    //        prioritizedQuestion to questionRepository.findById(prioritizedQuestion.questionId)
-    //            .getOrElse {
-    //                throw IllegalStateException("Question ${prioritizedQuestion.questionId} does not exist.")
-    //            }
-    //    }
-    //
-    //    val sentencePriorities = possiblePrioritizedSentences.map { prioritizedSentence ->
-    //        prioritizedSentence to referenceSentenceRepository.findById(prioritizedSentence.referenceSentencesId)
-    //            .getOrElse {
-    //                throw IllegalStateException("Sentence ${prioritizedSentence.referenceSentencesId} does not exist.")
-    //            }
-    //    }
-    //
-    //    val questionAndSentencePriorities = sentencePriorities.flatMap { (sentencePrio, sentence) ->
-    //        questionPriorities.map { (questionPrio, question) ->
-    //            Pair(question, sentence) to questionPrio.priority + sentencePrio.priority
-    //        }
-    //    }.shuffled().sortedBy { it.second }
-
-
-        // Commented out: Priority-based loop
-    //    for ((questionAndSentence, _) in questionAndSentencePriorities) {
-    //        val (question, sentence) = questionAndSentence
-    //        if (question !in sentence.applicableQuestions!!) {
-    //            continue
-    //        }
-    //
-    //        val questionAnswers = answerRepository.findAllByQuestionId(question.id!!)
-    //
-    //        val availableTasks = taskService.findAll()
-    //            .filter {
-    //                it.question.id == question.id
-    //                        && it.sample1.referenceSentence?.id == sentence.id
-    //                        && it.sample2.referenceSentence?.id == sentence.id
-    //                        && excludedTasks[question.id]?.contains(it.sample1.id) != true
-    //                        && excludedTasks[question.id]?.contains(it.sample2.id) != true
-    //            }
-    //            .map { task -> task to questionAnswers.filter { it.sampleId == task.sample.id } }
-    //            .filter { (_, answersOfTask) ->
-    //                notAnsweredByUser(answersOfTask, userId)
-    //                        && (missingAnswerFromAnyone(answersOfTask, targetAnswerCount)
-    //                        || (forExpert && missingAnswerFromExpert(answersOfTask, targetExpertAnswerCount)))
-    //            }
-    //
-    //        pendingAnswersCount += availableTasks.size
-    //
-    //        if (firstFoundBatch != null || availableTasks.isEmpty()) {
-    //            continue
-    //        }
-    //
-    //        val batchTasks = availableTasks
-    //            .shuffled()
-    //            .sortedBy { (_, answers) -> answers.size }
-    //            .sortedBy { (_, answers) -> if (forExpert) min(targetExpertAnswerCount, answers.filter { it.isFromExpert() }.size) else null }
-    //            .take(batchSize)
-    //            .map { (task, _) ->
-    //                Pair(SampleInfoBody.fromSample(task.sample1), SampleInfoBody.fromSample(task.sample2))
-    //            }
-    //
-    //        val example = question.exampleImageName?.let { exampleRepository.findByImageName(it) }
-    //            ?: throw IllegalStateException("Could not retrieve Example for image with name ${question.exampleImageName}")
-    //
-    //        firstFoundBatch = TaskBatchInfoBody(
-    //            userAnswerCounts = GetUserAnswerCountsBody(
-    //                submittedAnswersCount = submittedAnswersCount,
-    //                pendingAnswersCount = null
-    //            ),
-    //            question = question,
-    //            example = example,
-    //            referenceSentence = ReferenceSentenceInfoBody.fromReferenceSentence(sentence),
-    //            samplePairs = batchTasks
-    //        )
-    //    }
-
-        // logger.info("availableTasks: $availableTasks")
-
         val validTasks = availableTasks.filter { task ->
             val ref1 = task.sample1.referenceSentence
             val ref2 = task.sample2.referenceSentence
@@ -219,7 +138,6 @@ class BatchService(
             ref1.isQuestion1Applicable() && ref2.isQuestion1Applicable()
         }
 
-        // logger.info("validTasks: $validTasks")
 
         if (validTasks.isEmpty()) return null
 
@@ -244,8 +162,6 @@ class BatchService(
             example = example,
             samplePairs = samplePairs
         )
-
-        // logger.info("firstFoundBatch: $firstFoundBatch")
 
         return firstFoundBatch
 

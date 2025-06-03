@@ -68,10 +68,8 @@ class UserComparisonMatrixService(
             // Decompress and decode the matrix JSON
             val decompressedMatrixJson = decompress(decodeFromBase64(entity.matrixJson))
             logger.info("decompressed matrix: $decompressedMatrixJson")
-
             val matrix: Array<IntArray> = objectMapper.readValue(decompressedMatrixJson)
             logger.info("matrix: $matrix")
-
 
             // Decompress and decode the sample IDs JSON (no need for null checks)
             val decompressedSampleIdsJson = decompress(decodeFromBase64(entity.sampleIdsJson))
@@ -122,7 +120,6 @@ class UserComparisonMatrixService(
     }
 
     fun recordComparison(username: String, winnerId: Long, loserId: Long) {
-        // Fetch the matrix and sampleIds
         val (matrix, sampleIds) = getMatrixForUser(username)
 
         // Find the indices for winner and loser in the sampleIds list
@@ -134,19 +131,13 @@ class UserComparisonMatrixService(
             throw IndexOutOfBoundsException("Invalid index. Ensure the indices are within the bounds of the sample list.")
         }
 
-        // Logic to update the matrix with winner and loser indices
         matrix[winnerIndex][loserIndex] += 1
 
-        // Save the updated matrix and sample list
         saveMatrixForUser(username, matrix, sampleIds)
     }
 
-    // This method will retrieve all UserComparisonMatrix records
     fun getAllMatrices(): List<UserComparisonMatrix> {
         return matrixRepo.findAll()
     }
-
-
-
 
 }
