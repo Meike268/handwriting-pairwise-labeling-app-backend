@@ -11,10 +11,10 @@ class UserComparisonMatrix(
     @ManyToOne
     var user: User? = null,
 
-    @Column(name = "matrix_json", nullable = false)
+    @Column(name = "matrix_json", nullable = false, columnDefinition = "LONGTEXT")
     var matrixJson: String = "",
 
-    @Column(name = "sample_ids_json")
+    @Column(name = "sample_ids_json", columnDefinition = "TEXT" )
     var sampleIdsJson: String = ""
 ) {
     @Id
