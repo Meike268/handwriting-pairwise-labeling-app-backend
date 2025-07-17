@@ -3,6 +3,7 @@ package de.xai.handwriting_labeling_app_backend.service
 import de.xai.handwriting_labeling_app_backend.model.Task
 import de.xai.handwriting_labeling_app_backend.repository.SampleRepository
 import de.xai.handwriting_labeling_app_backend.repository.UserComparisonMatrixRepository
+import de.xai.handwriting_labeling_app_backend.repository.ComparisonListRepository
 import de.xai.handwriting_labeling_app_backend.service.AsapService
 import de.xai.handwriting_labeling_app_backend.model.User
 import org.springframework.stereotype.Service
@@ -16,7 +17,8 @@ class TaskService(
     private val sampleRepository: SampleRepository,
     private val asapService: AsapService,
     private val matrixService: UserComparisonMatrixService,
-    private val matrixRepository: UserComparisonMatrixRepository
+    private val matrixRepository: UserComparisonMatrixRepository,
+    private val comparisonListRepository: UserComparisonMatrixRepository,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -24,21 +26,46 @@ class TaskService(
         username: String,
     ): List<Task> {
 
-        // get all samples sorted by ID and filtered by applicability of question 1
-        val samples = sampleRepository.findAll()
-            .sortedBy { it.id }
+        // 1. Get all samples and build a lookup map by ID
+        val samplesById = sampleRepository.findAll()
             .filter { it.referenceSentence?.isQuestion1Applicable() == true }
+            .associateBy { it.id }
 
+        // 2. Get all comparison pairs where annotated == false
+        val comparisonPairs = comparisonListRepository.findByAnnotatedFalse()
+
+        // 3. Filter only valid sample pairs and create tasks
+        val tasks = comparisonPairs.mapNotNull { comparison ->
+            val sample1 = samplesById[comparison.sample1Id]
+            val sample2 = samplesById[comparison.sample2Id]
+
+            // Ensure both samples exist and question 1 is applicable to both
+            if (sample1 != null && sample2 != null &&
+                sample1.referenceSentence?.isQuestion1Applicable() == true &&
+                sample2.referenceSentence?.isQuestion1Applicable() == true
+            ) {
+                val question = sample1.referenceSentence!!.applicableQuestions
+                    ?.firstOrNull { it.id == 1L }
+
+                question?.let { Task(sample1, sample2, it) }
+            } else {
+                emptyList<Task>()
+            }
+        }
+
+        return tasks
+
+        /*
         // get comparison matrix for user from db
-        val (matrix, _) = matrixService.getMatrixForUser(username)
+        //val (matrix, _) = matrixService.getMatrixForUser(username)
 
         // get recommended pairsToCompare and meanEIG from asapService based on comparison matrix
-        val (pairsToCompare, meanEIG) = asapService.getPairsToCompare(matrix)
+        //val (pairsToCompare, meanEIG) = asapService.getPairsToCompare(matrix)
 
         // only label pairs that haven't been labeled yet
-        val filteredPairs = pairsToCompare.filter { (row, col) ->
-            matrix[row][col] == 0 && matrix[col][row] == 0
-        }
+        //val filteredPairs = pairsToCompare.filter { (row, col) ->
+        //    matrix[row][col] == 0 && matrix[col][row] == 0
+        //}
 
         logger.info("filteredPairs: $filteredPairs")
         logger.info("meanEIG: $meanEIG")
@@ -61,6 +88,8 @@ class TaskService(
                 emptyList<Task>()
             }
         }
+
+        */
 
     }
 }
