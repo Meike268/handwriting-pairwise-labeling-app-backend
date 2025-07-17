@@ -24,7 +24,8 @@ class BatchService(
     private val answerRepository: AnswerRepository,
     private val configHandler: BatchConfigHandler,
     private val taskService: TaskService,
-    private val userBatchLogRepository: UserBatchLogRepository
+    private val userBatchLogRepository: UserBatchLogRepository,
+    private val comparisonListRepository: ComparisonListRepository
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -38,6 +39,7 @@ class BatchService(
 
         val config = configHandler.readBatchServiceConfig()
 
+        /*
         val batchLimit = config.batchCount
         val batchSize = config.batchSize
         val userBatchCount = userBatchLogRepository.countByUserId(user.id!!)
@@ -47,6 +49,8 @@ class BatchService(
             logger.info("User ${user.username} reached batch limit ($batchLimit).")
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, body = null)
         }
+
+        */
 
         val taskBatchBody = if (config.samplesOrigin == XAI_SENTENCE_DIRECTORY_NAME)
             findXaiSentenceBatch(
@@ -70,12 +74,13 @@ class BatchService(
             return GetBatchResponseBody(state = GET_BATCH_RESPONSE_STATE_FINISHED, body = null)
         }
 
-        var hasSavedLog = false
-
+        /*//
+        var hasSavedLog = false// Check if user has already a batch log entry
         if (!hasSavedLog){
             userBatchLogRepository.save(UserBatchLog(user = user))
             hasSavedLog = true
         }
+        */
 
 
 
@@ -127,9 +132,10 @@ class BatchService(
         val config = configHandler.readBatchServiceConfig()
 
         val submittedAnswersCount = answerRepository.findByUserId(userId).size
-        var pendingAnswersCount = config.batchSize * config.batchCount - submittedAnswersCount
+        var pendingAnswersCount = 0
 
         val availableTasks = taskService.findAll(username)
+        pendingAnswersCount += availableTasks.size
 
         val validTasks = availableTasks.filter { task ->
             val ref1 = task.sample1.referenceSentence
@@ -141,14 +147,27 @@ class BatchService(
 
         if (validTasks.isEmpty()) return null
 
-        val samplePairs = validTasks.map { task ->
+       val selectedTasks = validTasks
+            .shuffled()
+            .sortedBy { (_, answers) -> if (forExpert) min(targetExpertAnswerCount, answers.filter { it.isFromExpert() }.size) else null }
+            .take(batchSize)
+            .map { (task, _) -> task }
+
+       selectedTasks.forEach { task ->
+            val sample1Id = task.sample1.id ?: return@forEach
+            val sample2Id = task.sample2.id ?: return@forEach
+
+            comparisonListRepository.updateAnnotatedBySampleIds(sample1Id, sample2Id, true)
+        }
+
+        val samplePairs = selectedTasks.map { task ->
             Pair(
                 SampleInfoBody.fromSample(task.sample1),
                 SampleInfoBody.fromSample(task.sample2)
             )
         }
 
-        val firstTask = validTasks.first()
+        val firstTask = selectedTasks.first()
 
         val example = firstTask.question.exampleImageName?.let { exampleRepository.findByImageName(it) }
             ?: throw IllegalStateException("Could not retrieve Example for image with name ${firstTask.question.exampleImageName}")
