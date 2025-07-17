@@ -38,11 +38,13 @@ class AnswerService(
         val question = questionRepository.findById(questionId).get()
 
         // record result in userComparisonMatrix
+        /*
         if (score != 0) {
             val winnerId = if (score == 1) sampleId1 else sampleId2
             val loserId = if (score == 1)  sampleId2 else sampleId1
             userComparisonMatrixService.recordComparison(username, winnerId, loserId)
         }
+        */
 
         return answerRepository.save(
             Answer(

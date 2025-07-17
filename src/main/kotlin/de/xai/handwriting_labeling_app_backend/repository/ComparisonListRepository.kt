@@ -4,8 +4,13 @@ import de.xai.handwriting_labeling_app_backend.model.ComparisonList
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
+import jakarta.transaction.Transactional
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+
+
 @Repository
-interface ComparisonListRepository: JpaRepository<ComparisonList, Long>
+interface ComparisonListRepository: JpaRepository<ComparisonList, Long> {
 
     @Modifying
     @Transactional

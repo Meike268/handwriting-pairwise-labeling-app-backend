@@ -1,8 +1,8 @@
+package de.xai.handwriting_labeling_app_backend.component
+
 import org.springframework.stereotype.Component
 import java.io.BufferedReader
-import javax.annotation.PostConstruct
-
-package de.xai.handwriting_labeling_app_backend.component
+import jakarta.annotation.PostConstruct
 
 import de.xai.handwriting_labeling_app_backend.repository.ComparisonListRepository
 import de.xai.handwriting_labeling_app_backend.model.ComparisonList
@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory
 @Component
 class SeedDataInitializer(
     private val comparisonListRepository: ComparisonListRepository
-    private val comparisonList: ComparisonList
 ) {
 
     @PostConstruct
@@ -19,8 +18,8 @@ class SeedDataInitializer(
         // Only seed if table is empty
         if (comparisonListRepository.count() > 0) return
 
-        val seedData: List<comparisonList> = javaClass
-            .getResourceAsStream("/seed/initial_data.csv")
+        val seedData: List<ComparisonList> = javaClass
+            .getResourceAsStream("/unique_random_pairs.csv")
             ?.bufferedReader()
             ?.useLines { lines ->
                 lines.drop(1) // skip header
@@ -31,7 +30,7 @@ class SeedDataInitializer(
                         ComparisonList(
                             sample1Id = sample1Id,
                             sample2Id = sample2Id,
-                            annotated = false
+                            annotated = false)
                     }.toList()
             } ?: emptyList()
 

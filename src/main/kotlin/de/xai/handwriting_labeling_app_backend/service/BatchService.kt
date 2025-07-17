@@ -57,7 +57,7 @@ class BatchService(
                 targetAnswerCount = config.targetAnswerCount,
                 targetExpertAnswerCount = config.targetExpertAnswerCount,
                 batchSize = config.batchSize,
-                userId = user.id,
+                userId = user.id!!,
                 username = username,
                 forExpert = user.isExpert(),
                 possiblePrioritizedQuestions = config.prioritizedQuestions.toMutableList(),
@@ -147,15 +147,15 @@ class BatchService(
 
         if (validTasks.isEmpty()) return null
 
+
        val selectedTasks = validTasks
             .shuffled()
-            .sortedBy { (_, answers) -> if (forExpert) min(targetExpertAnswerCount, answers.filter { it.isFromExpert() }.size) else null }
+            //.sortedBy { ... }
             .take(batchSize)
-            .map { (task, _) -> task }
 
        selectedTasks.forEach { task ->
-            val sample1Id = task.sample1.id ?: return@forEach
-            val sample2Id = task.sample2.id ?: return@forEach
+            val sample1Id = task.sample1.id
+            val sample2Id = task.sample2.id
 
             comparisonListRepository.updateAnnotatedBySampleIds(sample1Id, sample2Id, true)
         }
