@@ -58,4 +58,27 @@ class ComparisonListService(
             comparisonListRepository.findByAnnotatedFalse()
         }
     }
+
+    // Set all unannotated comparisons to annotated=true if a corresponding answer exists
+    fun annotateComparisonsWithAnswers(): Int {
+        // Fetch all unannotated comparisons
+        val unannotatedComparisons = comparisonListRepository.findByAnnotatedFalse()
+        var updatedCount = 0
+
+        unannotatedComparisons.forEach { comparison ->
+            // Check if an answer exists for this comparison
+            val exists = answerRepository.existsBySamplePair(
+                comparison.sample1Id!!,
+                comparison.sample2Id!!
+            )
+            // If an answer exists, set the comparison as annotated
+            if (exists) {
+                comparison.annotated = true
+                comparisonListRepository.save(comparison)
+                updatedCount++
+            }
+        }
+
+        return updatedCount
+    }
 }

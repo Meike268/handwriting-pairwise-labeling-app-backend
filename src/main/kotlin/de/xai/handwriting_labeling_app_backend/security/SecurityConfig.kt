@@ -29,6 +29,11 @@ class SecurityConfig (val env: Environment) {
                 authorize(HttpMethod.POST, "/matrix/{username}/comparison", authenticated)
                 authorize(HttpMethod.POST, "/matrix/{username}/save", authenticated)
 
+                authorize(HttpMethod.GET, "/comparisons", hasRole("ADMIN"))
+                authorize(HttpMethod.GET, "/comparisons/byAnnotationStatus", hasRole("ADMIN"))
+                authorize(HttpMethod.POST, "/comparisons/cleanOrphans", hasRole("ADMIN"))
+                authorize(HttpMethod.POST, "/comparisons/annotate", hasRole("ADMIN"))
+
                 authorize(HttpMethod.GET, "/userBatchLog", hasRole("ADMIN"))
                 authorize(HttpMethod.GET, "/userBatchLog/{username}", authenticated)
 

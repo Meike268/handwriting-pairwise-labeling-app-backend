@@ -19,7 +19,7 @@ import java.util.*
 class ComparisonListController(
     private val comparisonListService: ComparisonListService
 ) {
-    @PostMapping("/clean-orphans")
+    @PostMapping("/cleanOrphans")
     fun cleanOrphanedComparisons(): ResponseEntity<Map<String, Any>> {
         val updated = comparisonListService.unannotateOrphanedComparisons()
         return ResponseEntity.ok(mapOf("updated" to updated))
@@ -33,7 +33,7 @@ class ComparisonListController(
     }
 
     // Fetch comparisons based on annotation status
-    @GetMapping("/by-annotation-status")
+    @GetMapping("/byAnnotationStatus")
     fun getComparisonsByAnnotationStatus(
         @RequestParam annotated: Boolean? = null
     ): ResponseEntity<List<ComparisonList>> {
@@ -43,5 +43,12 @@ class ComparisonListController(
             comparisonListService.getAllComparisons()
         }
         return ResponseEntity.ok(comparisons)
+    }
+
+    // Endpoint to set all unannotated comparisons to annotated=true if an answer exists
+    @PostMapping("/annotate")
+    fun annotateComparisons(): ResponseEntity<Map<String, Any>> {
+        val updated = comparisonListService.annotateComparisonsWithAnswers()
+        return ResponseEntity.ok(mapOf("updated" to updated))
     }
 }
