@@ -18,4 +18,8 @@ interface ComparisonListRepository: JpaRepository<ComparisonList, Long> {
     fun updateAnnotatedBySampleIds(sample1Id: Long, sample2Id: Long, annotatedValue: Boolean)
 
     fun findByAnnotatedFalse(): List<ComparisonList>
+
+    fun findByAnnotatedTrue(): List<ComparisonList>
+
+
 }
