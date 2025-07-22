@@ -19,7 +19,7 @@ class SeedDataInitializer(
         if (comparisonListRepository.count() > 0) return
 
         val seedData: List<ComparisonList> = javaClass
-            .getResourceAsStream("/unique_random_pairs.csv")
+            .getResourceAsStream("/samples_all_pairs.csv")
             ?.bufferedReader()
             ?.useLines { lines ->
                 lines.drop(1) // skip header

@@ -98,20 +98,13 @@ CREATE TABLE `report` (
     PRIMARY KEY (`id`)
 );
 
-CREATE TABLE user_comparison_matrix (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    matrix_json LONGTEXT NOT NULL,
-    sample_ids_json TEXT,
-
-    FOREIGN KEY (user_id) REFERENCES user(id)
+CREATE TABLE `comparison_list` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `sample1_id` bigint NOT NULL,
+    `sample2_id` bigint NOT NULL,
+    `annotated` boolean NOT NULL,
+    PRIMARY KEY (`id`)
 );
 
-CREATE TABLE user_batch_log (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    timestamp timestamp NOT NULL,
 
-    FOREIGN KEY (user_id) REFERENCES user(id)
-);
 
