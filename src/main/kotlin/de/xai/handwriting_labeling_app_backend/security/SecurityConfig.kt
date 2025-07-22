@@ -23,19 +23,10 @@ class SecurityConfig (val env: Environment) {
                 authorize("/ping", permitAll)
                 authorize("/files/**", authenticated)
 
-                authorize(HttpMethod.GET, "/matrix", hasRole("ADMIN"))
-
-                authorize(HttpMethod.GET, "/matrix/{username}", authenticated)
-                authorize(HttpMethod.POST, "/matrix/{username}/comparison", authenticated)
-                authorize(HttpMethod.POST, "/matrix/{username}/save", authenticated)
-
-                authorize(HttpMethod.GET, "/comparisons", hasRole("ADMIN"))
-                authorize(HttpMethod.GET, "/comparisons/byAnnotationStatus", hasRole("ADMIN"))
+                authorize(HttpMethod.GET, "/comparisons", authenticated)
+                authorize(HttpMethod.GET, "/comparisons/byAnnotationStatus", authenticated)
                 authorize(HttpMethod.POST, "/comparisons/cleanOrphans", hasRole("ADMIN"))
                 authorize(HttpMethod.POST, "/comparisons/annotate", hasRole("ADMIN"))
-
-                authorize(HttpMethod.GET, "/userBatchLog", hasRole("ADMIN"))
-                authorize(HttpMethod.GET, "/userBatchLog/{username}", authenticated)
 
 
                 authorize("/users", hasRole("ADMIN"))

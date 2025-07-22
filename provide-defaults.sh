@@ -12,8 +12,8 @@ APP_URL_ROOTS=http://localhost:3000
 MYSQL_HOST=localhost
 MYSQL_PORT=3306
 MYSQL_DATABASE=handwriting_pairwise_labeling_app
-MYSQL_USERNAME=root
-MYSQL_PASSWORD=rootpassword
+MYSQL_USERNAME=
+MYSQL_PASSWORD=
 
 REACT_APP_BACKEND_URL_ROOT=http://localhost:8080
 " \
