@@ -10,7 +10,6 @@ import de.xai.handwriting_labeling_app_backend.utils.safeLet
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import de.xai.handwriting_labeling_app_backend.service.UserComparisonMatrixService
 
 
 @Service
@@ -19,8 +18,7 @@ class AnswerService(
     private val userRepository: UserRepository,
     private val answerRepository: AnswerRepository,
     private val referenceSentenceRepository: ReferenceSentenceRepository,
-    private val sampleRepository: SampleRepository,
-    private val userComparisonMatrixService: UserComparisonMatrixService
+    private val sampleRepository: SampleRepository
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 

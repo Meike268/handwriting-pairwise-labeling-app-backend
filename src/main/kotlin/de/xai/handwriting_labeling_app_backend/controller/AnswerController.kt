@@ -4,7 +4,6 @@ import de.xai.handwriting_labeling_app_backend.apimodel.AnswerCreateBody
 import de.xai.handwriting_labeling_app_backend.apimodel.ExportAnswersBody
 import de.xai.handwriting_labeling_app_backend.model.Answer
 import de.xai.handwriting_labeling_app_backend.service.AnswerService
-import de.xai.handwriting_labeling_app_backend.service.UserComparisonMatrixService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*

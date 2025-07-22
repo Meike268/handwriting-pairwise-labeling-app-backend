@@ -1,7 +1,5 @@
 package de.xai.handwriting_labeling_app_backend.service
 
-import de.xai.handwriting_labeling_app_backend.model.UserComparisonMatrix
-import de.xai.handwriting_labeling_app_backend.repository.UserComparisonMatrixRepository
 import org.springframework.stereotype.Service
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper

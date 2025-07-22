@@ -24,7 +24,6 @@ class BatchService(
     private val answerRepository: AnswerRepository,
     private val configHandler: BatchConfigHandler,
     private val taskService: TaskService,
-    private val userBatchLogRepository: UserBatchLogRepository,
     private val comparisonListRepository: ComparisonListRepository
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
